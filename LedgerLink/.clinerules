@@ -1,0 +1,9 @@
+# Project Intructions
+
+Do not change the Django settibgs.py file. You can add any additional settings to the settings.py file.
+Do note modify any of the django models. You cant add or remove fields from the models or alter them in any way.
+Throughly anaylze the models and the reationships between them and create the frontend components accordingly.
+Do not implement and security features or authentication during development
+Do not alter the backend logice or the models in any way.  
+All frontend components are in the frontend folder.
+Use Material UI for frontend components and Material React Table should be used for all List views.

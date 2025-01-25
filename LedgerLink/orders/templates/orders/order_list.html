@@ -1,0 +1,138 @@
+{% extends '_base.html' %}
+{% load custom_filters %}
+{% load static %}
+
+{% block title %}Orders - LedgerLink{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-6">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-6">
+        <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white">Orders</h1>
+        <div>
+            <button id="manageColumnsBtn" class="btn btn-outline-secondary me-2">
+                <i class="bi bi-columns"></i> Manage Columns
+            </button>
+            <a href="{% url 'orders:order_create' %}"
+               class="btn btn-primary">
+                + New Order
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters and Orders Table -->
+    <div class="row">
+        <div class="col-12">
+            <!-- Filters -->
+            <form method="get" class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <input type="text" name="q" class="form-control" placeholder="Search orders..." value="{{ request.GET.q }}">
+                </div>
+                <div class="col-md-4">
+                    <select name="customer" class="form-select">
+                        <option value="">All Customers</option>
+                        {% for customer in customers %}
+                            <option value="{{ customer.id }}" {% if request.GET.customer == customer.id|stringformat:'i' %}selected{% endif %}>
+                                {{ customer.company_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                </div>
+            </form>
+
+            <!-- Orders Table -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <table id="ordersTable" class="table table-hover">
+                    <thead class="bg-gray-100">
+                    <tr>
+                        {% for column in selected_columns %}
+                            <th>{{ columns|get_item:column|get_item:'label' }}</th>
+                        {% endfor %}
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for order in orders %}
+                        <tr>
+                            {% for column in selected_columns %}
+                                <td>{{ order|get_field:column }}</td>
+                            {% endfor %}
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'orders:order_detail' order.transaction_id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                    <a href="{% url 'orders:order_update' order.transaction_id %}" class="btn btn-sm btn-outline-warning">Edit</a>
+                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteOrderModal" data-order-id="{{ order.transaction_id }}">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Manage Columns Modal -->
+<div class="modal fade" id="manageColumnsModal" tabindex="-1" aria-labelledby="manageColumnsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="manageColumnsModalLabel">Manage Columns</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    {% for field, props in columns.items %}
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input column-checkbox" id="col_{{ field }}" value="{{ field }}"
+                                       {% if field in selected_columns %}checked{% endif %}>
+                                <label class="form-check-label" for="col_{{ field }}">{{ props.label }}</label>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" id="saveColumnsBtn" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const manageColumnsBtn = document.getElementById('manageColumnsBtn');
+        const manageColumnsModal = new bootstrap.Modal(document.getElementById('manageColumnsModal'));
+        const saveColumnsBtn = document.getElementById('saveColumnsBtn');
+
+        manageColumnsBtn.addEventListener('click', () => manageColumnsModal.show());
+
+        saveColumnsBtn.addEventListener('click', () => {
+            const selectedColumns = [];
+            document.querySelectorAll('.column-checkbox:checked').forEach(checkbox => {
+                selectedColumns.push(checkbox.value);
+            });
+
+            // Save to sessionStorage for persistence
+            sessionStorage.setItem('selectedColumns', JSON.stringify(selectedColumns));
+
+            // Reload the page to apply changes
+            location.reload();
+        });
+
+        // Load selected columns from sessionStorage on page load
+        const savedColumns = JSON.parse(sessionStorage.getItem('selectedColumns'));
+        if (savedColumns) {
+            document.querySelectorAll('.column-checkbox').forEach(checkbox => {
+                checkbox.checked = savedColumns.includes(checkbox.value);
+            });
+        }
+    });
+</script>
+{% endblock %}

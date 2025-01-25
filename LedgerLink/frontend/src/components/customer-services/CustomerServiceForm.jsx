@@ -1,0 +1,334 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Paper,
+  TextField,
+  Button,
+  Typography,
+  Grid,
+  Alert,
+  CircularProgress,
+  Snackbar,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
+  OutlinedInput,
+} from '@mui/material';
+import { useNavigate, useParams } from 'react-router-dom';
+import { customerServiceApi, customerApi, handleApiError } from '../../utils/apiClient';
+
+const CustomerServiceForm = () => {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
+
+  const [formData, setFormData] = useState({
+    customer: '',
+    service: '',
+    unit_price: '',
+    skus: []
+  });
+  const [customers, setCustomers] = useState([]);
+  const [services, setServices] = useState([]);
+  const [availableSkus, setAvailableSkus] = useState([]);
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    fetchCustomers();
+    fetchServices();
+    fetchSkus();
+    if (isEditMode) {
+      fetchCustomerService();
+    }
+  }, [id]);
+
+  const fetchCustomerService = async () => {
+    try {
+      setLoading(true);
+      const response = await customerServiceApi.get(id);
+      if (response.success) {
+        setFormData({
+          customer: response.data.customer,
+          service: response.data.service,
+          unit_price: response.data.unit_price,
+          skus: response.data.sku_list || []
+        });
+      }
+    } catch (error) {
+      setError(handleApiError(error));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCustomers = async () => {
+    try {
+      const response = await customerApi.list();
+      if (response.success) {
+        setCustomers(response.data);
+      }
+    } catch (error) {
+      setError(handleApiError(error));
+    }
+  };
+
+  const fetchServices = async () => {
+    try {
+      // Assuming there's a serviceApi similar to customerApi
+      const response = await fetch('/api/services/');
+      const data = await response.json();
+      setServices(data);
+    } catch (error) {
+      setError(handleApiError(error));
+    }
+  };
+
+  const fetchSkus = async () => {
+    try {
+      // Assuming there's an endpoint to fetch available SKUs
+      const response = await fetch('/api/products/');
+      const data = await response.json();
+      setAvailableSkus(data);
+    } catch (error) {
+      setError(handleApiError(error));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.customer) {
+      newErrors.customer = 'Customer is required';
+    }
+    
+    if (!formData.service) {
+      newErrors.service = 'Service is required';
+    }
+    
+    if (!formData.unit_price) {
+      newErrors.unit_price = 'Unit price is required';
+    } else if (isNaN(formData.unit_price) || parseFloat(formData.unit_price) <= 0) {
+      newErrors.unit_price = 'Unit price must be a positive number';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: null
+      }));
+    }
+  };
+
+  const handleSkuChange = (event) => {
+    const { value } = event.target;
+    setFormData(prev => ({
+      ...prev,
+      skus: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      const apiCall = isEditMode
+        ? () => customerServiceApi.update(id, formData)
+        : () => customerServiceApi.create(formData);
+
+      const response = await apiCall();
+
+      if (response.success) {
+        if (formData.skus.length > 0) {
+          await customerServiceApi.addSkus(response.data.id, formData.skus);
+        }
+        setSuccess(true);
+        setTimeout(() => {
+          navigate('/customer-services');
+        }, 1500);
+      }
+    } catch (error) {
+      setError(handleApiError(error));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCloseError = () => {
+    setError(null);
+  };
+
+  if (loading && isEditMode) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ maxWidth: 600, mx: 'auto', mt: 4 }}>
+      <Snackbar
+        open={Boolean(error)}
+        autoHideDuration={6000}
+        onClose={handleCloseError}
+      >
+        <Alert onClose={handleCloseError} severity="error">
+          {error}
+        </Alert>
+      </Snackbar>
+
+      <Paper sx={{ p: 4 }}>
+        <Typography variant="h5" component="h1" gutterBottom>
+          {isEditMode ? 'Edit Customer Service' : 'New Customer Service'}
+        </Typography>
+
+        {success && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            Customer service {isEditMode ? 'updated' : 'created'} successfully!
+          </Alert>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <FormControl fullWidth error={Boolean(errors.customer)}>
+                <InputLabel>Customer</InputLabel>
+                <Select
+                  name="customer"
+                  value={formData.customer}
+                  onChange={handleChange}
+                  label="Customer"
+                >
+                  {customers.map((customer) => (
+                    <MenuItem key={customer.id} value={customer.id}>
+                      {customer.company_name}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {errors.customer && (
+                  <Typography color="error" variant="caption">
+                    {errors.customer}
+                  </Typography>
+                )}
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12}>
+              <FormControl fullWidth error={Boolean(errors.service)}>
+                <InputLabel>Service</InputLabel>
+                <Select
+                  name="service"
+                  value={formData.service}
+                  onChange={handleChange}
+                  label="Service"
+                >
+                  {services.map((service) => (
+                    <MenuItem key={service.id} value={service.id}>
+                      {service.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {errors.service && (
+                  <Typography color="error" variant="caption">
+                    {errors.service}
+                  </Typography>
+                )}
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                required
+                fullWidth
+                label="Unit Price"
+                name="unit_price"
+                type="number"
+                value={formData.unit_price}
+                onChange={handleChange}
+                error={Boolean(errors.unit_price)}
+                helperText={errors.unit_price}
+                variant="outlined"
+                inputProps={{ step: "0.01", min: "0" }}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel>SKUs</InputLabel>
+                <Select
+                  multiple
+                  name="skus"
+                  value={formData.skus}
+                  onChange={handleSkuChange}
+                  input={<OutlinedInput label="SKUs" />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((value) => (
+                        <Chip key={value} label={value} />
+                      ))}
+                    </Box>
+                  )}
+                >
+                  {availableSkus.map((sku) => (
+                    <MenuItem key={sku.id} value={sku.sku}>
+                      {sku.sku} - {sku.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => navigate('/customer-services')}
+                  disabled={loading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <CircularProgress size={24} />
+                  ) : (
+                    isEditMode ? 'Update Customer Service' : 'Create Customer Service'
+                  )}
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
+        </form>
+      </Paper>
+    </Box>
+  );
+};
+
+export default CustomerServiceForm;
