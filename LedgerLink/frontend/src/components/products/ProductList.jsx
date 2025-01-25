@@ -14,8 +14,6 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Add as AddIcon,
-  AddCircle as AddCircleIcon,
-  RemoveCircle as RemoveCircleIcon,
 } from '@mui/icons-material';
 import { MaterialReactTable } from 'material-react-table';
 import { useNavigate } from 'react-router-dom';
@@ -23,15 +21,13 @@ import { productApi, handleApiError } from '../../utils/apiClient';
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [stats, setStats] = useState({});
+  const [stats, setStats] = useState({ total_products: 0, products_by_customer: [] });
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchProducts();
-    fetchCategories();
     fetchStats();
   }, []);
 
@@ -39,26 +35,11 @@ const ProductList = () => {
     try {
       const params = {};
       if (filters.search) params.search = filters.search;
-      if (filters.category) params.category = filters.category;
-      if (filters.stock_status === 'in_stock') params.in_stock = true;
-      if (filters.stock_status === 'out_of_stock') params.in_stock = false;
-      if (filters.min_price) params.min_price = filters.min_price;
-      if (filters.max_price) params.max_price = filters.max_price;
+      if (filters.customer) params.customer = filters.customer;
       
       const response = await productApi.list(params);
       if (response.success) {
         setProducts(response.data);
-      }
-    } catch (error) {
-      setError(handleApiError(error));
-    }
-  };
-
-  const fetchCategories = async () => {
-    try {
-      const response = await productApi.getCategories();
-      if (response.success) {
-        setCategories(response.data);
       }
     } catch (error) {
       setError(handleApiError(error));
@@ -91,32 +72,12 @@ const ProductList = () => {
     }
   };
 
-  const handleUpdateStock = async (id, quantity, operation) => {
-    try {
-      const response = await productApi.updateStock(id, quantity, operation);
-      if (response.success) {
-        setSuccessMessage(`Stock ${operation}ed successfully`);
-        fetchProducts();
-        fetchStats();
-      }
-    } catch (error) {
-      setError(handleApiError(error));
-    }
-  };
-
   const handleCloseError = () => {
     setError(null);
   };
 
   const handleCloseSuccess = () => {
     setSuccessMessage('');
-  };
-
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(price);
   };
 
   const columns = useMemo(
@@ -127,98 +88,71 @@ const ProductList = () => {
         size: 120,
       },
       {
-        accessorKey: 'name',
-        header: 'Name',
-        size: 200,
-      },
-      {
-        accessorKey: 'category',
-        header: 'Category',
+        accessorKey: 'customer_details.company_name',
+        header: 'Customer',
         size: 150,
-        filterVariant: 'select',
-        filterSelectOptions: categories.map(category => ({
-          text: category,
-          value: category,
-        })),
       },
       {
-        accessorKey: 'price',
-        header: 'Price',
-        size: 120,
-        Cell: ({ cell }) => formatPrice(cell.getValue()),
-        Filter: ({ column }) => (
-          <Box sx={{ display: 'flex', gap: 1, p: 1 }}>
-            <input
-              type="number"
-              placeholder="Min"
-              onChange={(e) => {
-                column.setFilterValue((prev) => [
-                  e.target.value,
-                  prev?.[1],
-                ]);
-              }}
-              style={{ width: 60 }}
-            />
-            <input
-              type="number"
-              placeholder="Max"
-              onChange={(e) => {
-                column.setFilterValue((prev) => [
-                  prev?.[0],
-                  e.target.value,
-                ]);
-              }}
-              style={{ width: 60 }}
-            />
-          </Box>
-        ),
+        accessorKey: 'labeling_unit_1',
+        header: 'Unit 1',
+        size: 100,
       },
       {
-        accessorKey: 'stock_quantity',
-        header: 'Stock',
+        accessorKey: 'labeling_quantity_1',
+        header: 'Qty 1',
+        size: 80,
+      },
+      {
+        accessorKey: 'labeling_unit_2',
+        header: 'Unit 2',
+        size: 100,
+      },
+      {
+        accessorKey: 'labeling_quantity_2',
+        header: 'Qty 2',
+        size: 80,
+      },
+      {
+        accessorKey: 'labeling_unit_3',
+        header: 'Unit 3',
+        size: 100,
+      },
+      {
+        accessorKey: 'labeling_quantity_3',
+        header: 'Qty 3',
+        size: 80,
+      },
+      {
+        accessorKey: 'labeling_unit_4',
+        header: 'Unit 4',
+        size: 100,
+      },
+      {
+        accessorKey: 'labeling_quantity_4',
+        header: 'Qty 4',
+        size: 80,
+      },
+      {
+        accessorKey: 'labeling_unit_5',
+        header: 'Unit 5',
+        size: 100,
+      },
+      {
+        accessorKey: 'labeling_quantity_5',
+        header: 'Qty 5',
+        size: 80,
+      },
+      {
+        accessorKey: 'created_at',
+        header: 'Created',
         size: 150,
-        Cell: ({ row: { original } }) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {original.stock_quantity}
-            <IconButton
-              size="small"
-              onClick={() => handleUpdateStock(original.id, 1, 'add')}
-              color="primary"
-            >
-              <AddCircleIcon />
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => handleUpdateStock(original.id, 1, 'subtract')}
-              color="error"
-              disabled={original.stock_quantity <= 0}
-            >
-              <RemoveCircleIcon />
-            </IconButton>
-          </Box>
-        ),
-        filterVariant: 'select',
-        filterSelectOptions: [
-          { text: 'In Stock', value: 'in_stock' },
-          { text: 'Out of Stock', value: 'out_of_stock' },
-        ],
+        Cell: ({ cell }) => new Date(cell.getValue()).toLocaleString(),
       },
       {
-        accessorKey: 'is_active',
-        header: 'Status',
-        size: 120,
-        Cell: ({ cell }) => (
-          <Chip
-            label={cell.getValue() ? 'Active' : 'Inactive'}
-            color={cell.getValue() ? 'success' : 'default'}
-            size="small"
-          />
-        ),
-        filterVariant: 'select',
-        filterSelectOptions: [
-          { text: 'Active', value: true },
-          { text: 'Inactive', value: false },
-        ],
+        accessorKey: 'updated_at',
+        header: 'Updated',
+        size: 150,
+        Cell: ({ cell }) => new Date(cell.getValue()).toLocaleString(),
       },
       {
         id: 'actions',
@@ -244,7 +178,7 @@ const ProductList = () => {
         ),
       },
     ],
-    [categories, navigate]
+    [navigate]
   );
 
   return (
@@ -278,20 +212,15 @@ const ProductList = () => {
               variant="outlined"
             />
           </Grid>
-          <Grid item>
-            <Chip
-              label={`Active Products: ${stats.active_products || 0}`}
-              color="success"
-              variant="outlined"
-            />
-          </Grid>
-          <Grid item>
-            <Chip
-              label={`Out of Stock: ${stats.out_of_stock || 0}`}
-              color="error"
-              variant="outlined"
-            />
-          </Grid>
+          {stats.products_by_customer?.map((stat) => (
+            <Grid item key={stat.customer__company_name}>
+              <Chip
+                label={`${stat.customer__company_name}: ${stat.count}`}
+                color="secondary"
+                variant="outlined"
+              />
+            </Grid>
+          ))}
         </Grid>
 
         <MaterialReactTable

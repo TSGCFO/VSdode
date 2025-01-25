@@ -111,12 +111,12 @@ const CADShippingList = () => {
       {
         accessorKey: 'transaction',
         header: 'Order ID',
-        size: 120,
+        size: 100,
       },
       {
         accessorKey: 'customer_details.company_name',
         header: 'Customer',
-        size: 200,
+        size: 150,
         filterVariant: 'select',
         filterSelectOptions: customers.map(customer => ({
           text: customer.company_name,
@@ -124,20 +124,54 @@ const CADShippingList = () => {
         })),
       },
       {
+        accessorKey: 'service_code_description',
+        header: 'Service',
+        size: 150,
+      },
+      {
         accessorKey: 'ship_to_name',
-        header: 'Ship To',
-        size: 200,
-        Cell: ({ row: { original } }) => (
-          <Box>
-            {original.ship_to_name}<br />
-            {original.ship_to_city}, {original.ship_to_state}
-          </Box>
-        ),
+        header: 'Ship To Name',
+        size: 150,
+      },
+      {
+        accessorKey: 'ship_to_address_1',
+        header: 'Address 1',
+        size: 150,
+      },
+      {
+        accessorKey: 'ship_to_address_2',
+        header: 'Address 2',
+        size: 150,
+      },
+      {
+        accessorKey: 'shiptoaddress3',
+        header: 'Address 3',
+        size: 150,
+      },
+      {
+        accessorKey: 'ship_to_city',
+        header: 'City',
+        size: 120,
+      },
+      {
+        accessorKey: 'ship_to_state',
+        header: 'State',
+        size: 100,
+      },
+      {
+        accessorKey: 'ship_to_country',
+        header: 'Country',
+        size: 100,
+      },
+      {
+        accessorKey: 'ship_to_postal_code',
+        header: 'Postal Code',
+        size: 100,
       },
       {
         accessorKey: 'tracking_number',
         header: 'Tracking #',
-        size: 150,
+        size: 130,
         Cell: ({ cell }) => (
           <Chip
             label={cell.getValue() || 'No Tracking'}
@@ -145,6 +179,86 @@ const CADShippingList = () => {
             size="small"
           />
         ),
+      },
+      {
+        accessorKey: 'pre_tax_shipping_charge',
+        header: 'Pre-tax Charge',
+        size: 120,
+        Cell: ({ cell }) => formatCurrency(cell.getValue()),
+      },
+      {
+        accessorKey: 'tax1type',
+        header: 'Tax 1 Type',
+        size: 100,
+      },
+      {
+        accessorKey: 'tax1amount',
+        header: 'Tax 1',
+        size: 100,
+        Cell: ({ cell }) => formatCurrency(cell.getValue()),
+      },
+      {
+        accessorKey: 'tax2type',
+        header: 'Tax 2 Type',
+        size: 100,
+      },
+      {
+        accessorKey: 'tax2amount',
+        header: 'Tax 2',
+        size: 100,
+        Cell: ({ cell }) => formatCurrency(cell.getValue()),
+      },
+      {
+        accessorKey: 'tax3type',
+        header: 'Tax 3 Type',
+        size: 100,
+      },
+      {
+        accessorKey: 'tax3amount',
+        header: 'Tax 3',
+        size: 100,
+        Cell: ({ cell }) => formatCurrency(cell.getValue()),
+      },
+      {
+        accessorKey: 'fuel_surcharge',
+        header: 'Fuel Surcharge',
+        size: 120,
+        Cell: ({ cell }) => formatCurrency(cell.getValue()),
+      },
+      {
+        accessorKey: 'reference',
+        header: 'Reference',
+        size: 150,
+      },
+      {
+        accessorKey: 'weight',
+        header: 'Weight',
+        size: 100,
+      },
+      {
+        accessorKey: 'gross_weight',
+        header: 'Gross Weight',
+        size: 120,
+      },
+      {
+        accessorKey: 'box_length',
+        header: 'Length',
+        size: 100,
+      },
+      {
+        accessorKey: 'box_width',
+        header: 'Width',
+        size: 100,
+      },
+      {
+        accessorKey: 'box_height',
+        header: 'Height',
+        size: 100,
+      },
+      {
+        accessorKey: 'box_name',
+        header: 'Box Name',
+        size: 120,
       },
       {
         accessorKey: 'carrier',
@@ -159,17 +273,11 @@ const CADShippingList = () => {
       {
         accessorKey: 'ship_date',
         header: 'Ship Date',
-        size: 120,
-        Cell: ({ cell }) => 
-          cell.getValue() 
+        size: 150,
+        Cell: ({ cell }) =>
+          cell.getValue()
             ? new Date(cell.getValue()).toLocaleDateString()
             : 'Not Shipped',
-      },
-      {
-        accessorKey: 'total_charges',
-        header: 'Total Charges',
-        size: 120,
-        Cell: ({ cell }) => formatCurrency(cell.getValue()),
       },
       {
         id: 'actions',

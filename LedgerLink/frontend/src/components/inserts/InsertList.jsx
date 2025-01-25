@@ -131,6 +131,7 @@ const InsertList = () => {
           text: customer.company_name,
           value: customer.id,
         })),
+        Cell: ({ cell }) => cell.getValue() || 'N/A',
       },
       {
         accessorKey: 'insert_quantity',
@@ -182,6 +183,18 @@ const InsertList = () => {
             />
           </Box>
         ),
+      },
+      {
+        accessorKey: 'created_at',
+        header: 'Created',
+        size: 150,
+        Cell: ({ cell }) => new Date(cell.getValue()).toLocaleString(),
+      },
+      {
+        accessorKey: 'updated_at',
+        header: 'Updated',
+        size: 150,
+        Cell: ({ cell }) => new Date(cell.getValue()).toLocaleString(),
       },
       {
         id: 'actions',

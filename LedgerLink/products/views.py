@@ -19,44 +19,20 @@ class ProductViewSet(viewsets.ModelViewSet):
         """
         queryset = super().get_queryset()
         
-        # Filter by category
-        category = self.request.query_params.get('category', None)
-        if category:
-            queryset = queryset.filter(category=category)
-
-        # Filter by active status
-        is_active = self.request.query_params.get('is_active', None)
-        if is_active is not None:
-            is_active = is_active.lower() == 'true'
-            queryset = queryset.filter(is_active=is_active)
-
-        # Filter by stock status
-        in_stock = self.request.query_params.get('in_stock', None)
-        if in_stock is not None:
-            in_stock = in_stock.lower() == 'true'
-            if in_stock:
-                queryset = queryset.filter(stock_quantity__gt=0)
-            else:
-                queryset = queryset.filter(stock_quantity=0)
+        # Filter by customer
+        customer = self.request.query_params.get('customer', None)
+        if customer:
+            queryset = queryset.filter(customer=customer)
 
         # Search functionality
         search = self.request.query_params.get('search', None)
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
                 Q(sku__icontains=search) |
-                Q(description__icontains=search)
+                Q(customer__company_name__icontains=search)
             )
-
-        # Price range filtering
-        min_price = self.request.query_params.get('min_price', None)
-        max_price = self.request.query_params.get('max_price', None)
-        if min_price:
-            queryset = queryset.filter(price__gte=min_price)
-        if max_price:
-            queryset = queryset.filter(price__lte=max_price)
         
-        return queryset.order_by('name')
+        return queryset.order_by('sku')
 
     def list(self, request, *args, **kwargs):
         """
@@ -115,69 +91,24 @@ class ProductViewSet(viewsets.ModelViewSet):
             'message': 'Product deleted successfully'
         }, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'])
-    def update_stock(self, request, pk=None):
-        """
-        Update product stock quantity.
-        Expects quantity and operation ('add' or 'subtract') in request data.
-        """
-        instance = self.get_object()
-        quantity = request.data.get('quantity')
-        operation = request.data.get('operation', 'add')
-
-        if not quantity or not isinstance(quantity, (int, float)) or quantity <= 0:
-            return Response({
-                'success': False,
-                'message': 'Invalid quantity'
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        if operation not in ['add', 'subtract']:
-            return Response({
-                'success': False,
-                'message': 'Invalid operation'
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            instance.update_stock(quantity, operation)
-            serializer = self.get_serializer(instance)
-            return Response({
-                'success': True,
-                'message': f'Stock {operation}ed successfully',
-                'data': serializer.data
-            })
-        except ValueError as e:
-            return Response({
-                'success': False,
-                'message': str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=False, methods=['get'])
-    def categories(self, request):
-        """
-        Get list of unique product categories.
-        """
-        categories = Product.objects.values_list(
-            'category', flat=True
-        ).distinct().order_by('category')
-        return Response({
-            'success': True,
-            'data': list(categories)
-        })
-
     @action(detail=False, methods=['get'])
     def stats(self, request):
         """
         Get product statistics.
         """
+        from django.db.models import Count
+        
         total_products = self.get_queryset().count()
-        active_products = self.get_queryset().filter(is_active=True).count()
-        out_of_stock = self.get_queryset().filter(stock_quantity=0).count()
+        products_by_customer = self.get_queryset().values(
+            'customer__company_name'
+        ).annotate(
+            count=Count('id')
+        ).order_by('customer__company_name')
         
         return Response({
             'success': True,
             'data': {
                 'total_products': total_products,
-                'active_products': active_products,
-                'out_of_stock': out_of_stock
+                'products_by_customer': list(products_by_customer)
             }
         })

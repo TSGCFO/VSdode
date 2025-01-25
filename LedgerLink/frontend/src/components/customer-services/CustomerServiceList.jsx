@@ -98,7 +98,7 @@ const CustomerServiceList = () => {
         })),
       },
       {
-        accessorKey: 'service_name',
+        accessorKey: 'service_details.name',
         header: 'Service',
         size: 200,
       },
@@ -124,6 +124,18 @@ const CustomerServiceList = () => {
             )) || 'None'}
           </Box>
         ),
+      },
+      {
+        accessorKey: 'created_at',
+        header: 'Created',
+        size: 150,
+        Cell: ({ cell }) => new Date(cell.getValue()).toLocaleString(),
+      },
+      {
+        accessorKey: 'updated_at',
+        header: 'Updated',
+        size: 150,
+        Cell: ({ cell }) => new Date(cell.getValue()).toLocaleString(),
       },
       {
         id: 'actions',

@@ -7,3 +7,6 @@ Do not implement and security features or authentication during development
 Do not alter the backend logice or the models in any way.  
 All frontend components are in the frontend folder.
 Use Material UI for frontend components and Material React Table should be used for all List views.
+All list views should show all the fields of the model in a table.
+Test each component thorughly by running the development server and checking the components in the browser.
+All components should be responsive and should look good on all screen sizes.

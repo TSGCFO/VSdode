@@ -142,23 +142,97 @@ const OrderList = () => {
       {
         accessorKey: 'transaction_id',
         header: 'Transaction ID',
-        size: 150,
+        size: 120,
       },
       {
         accessorKey: 'customer_details.company_name',
         header: 'Customer',
-        size: 200,
+        size: 180,
       },
       {
         accessorKey: 'reference_number',
         header: 'Reference',
+        size: 120,
+      },
+      {
+        accessorKey: 'ship_to_name',
+        header: 'Ship To Name',
         size: 150,
+      },
+      {
+        accessorKey: 'ship_to_company',
+        header: 'Ship To Company',
+        size: 150,
+      },
+      {
+        accessorKey: 'ship_to_address',
+        header: 'Address',
+        size: 180,
+      },
+      {
+        accessorKey: 'ship_to_address2',
+        header: 'Address 2',
+        size: 150,
+      },
+      {
+        accessorKey: 'ship_to_city',
+        header: 'City',
+        size: 120,
+      },
+      {
+        accessorKey: 'ship_to_state',
+        header: 'State',
+        size: 100,
+      },
+      {
+        accessorKey: 'ship_to_zip',
+        header: 'ZIP',
+        size: 100,
+      },
+      {
+        accessorKey: 'ship_to_country',
+        header: 'Country',
+        size: 120,
+      },
+      {
+        accessorKey: 'weight_lb',
+        header: 'Weight (lb)',
+        size: 120,
+      },
+      {
+        accessorKey: 'line_items',
+        header: 'Line Items',
+        size: 100,
+      },
+      {
+        accessorKey: 'total_item_qty',
+        header: 'Total Qty',
+        size: 100,
+      },
+      {
+        accessorKey: 'volume_cuft',
+        header: 'Volume (ft³)',
+        size: 120,
+      },
+      {
+        accessorKey: 'packages',
+        header: 'Packages',
+        size: 100,
+      },
+      {
+        accessorKey: 'notes',
+        header: 'Notes',
+        size: 200,
+      },
+      {
+        accessorKey: 'carrier',
+        header: 'Carrier',
+        size: 120,
       },
       {
         accessorKey: 'status',
         header: 'Status',
-        size: 150,
-        // eslint-disable-next-line react/prop-types
+        size: 120,
         Cell: ({ row: { original } }) => {
           const { status, color } = getOrderStatus(original);
           return (
@@ -173,8 +247,7 @@ const OrderList = () => {
       {
         accessorKey: 'priority',
         header: 'Priority',
-        size: 150,
-        // eslint-disable-next-line react/prop-types
+        size: 120,
         Cell: ({ row: { original } }) => {
           const { priority, color } = getOrderPriority(original);
           return (
@@ -187,9 +260,10 @@ const OrderList = () => {
         },
       },
       {
-        accessorKey: 'total_item_qty',
-        header: 'Items',
-        size: 100,
+        accessorKey: 'close_date',
+        header: 'Close Date',
+        size: 150,
+        Cell: ({ cell }) => cell.getValue() ? new Date(cell.getValue()).toLocaleString() : '',
       },
       {
         id: 'actions',

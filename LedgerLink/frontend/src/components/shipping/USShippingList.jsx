@@ -123,12 +123,12 @@ const USShippingList = () => {
       {
         accessorKey: 'transaction',
         header: 'Order ID',
-        size: 120,
+        size: 100,
       },
       {
         accessorKey: 'customer_details.company_name',
         header: 'Customer',
-        size: 200,
+        size: 150,
         filterVariant: 'select',
         filterSelectOptions: customers.map(customer => ({
           text: customer.company_name,
@@ -136,20 +136,53 @@ const USShippingList = () => {
         })),
       },
       {
+        accessorKey: 'ship_date',
+        header: 'Ship Date',
+        size: 120,
+        Cell: ({ cell }) =>
+          cell.getValue()
+            ? new Date(cell.getValue()).toLocaleDateString()
+            : 'Not Shipped',
+      },
+      {
         accessorKey: 'ship_to_name',
-        header: 'Ship To',
-        size: 200,
-        Cell: ({ row: { original } }) => (
-          <Box>
-            {original.ship_to_name}<br />
-            {original.ship_to_city}, {original.ship_to_state}
-          </Box>
-        ),
+        header: 'Ship To Name',
+        size: 150,
+      },
+      {
+        accessorKey: 'ship_to_address_1',
+        header: 'Address 1',
+        size: 150,
+      },
+      {
+        accessorKey: 'ship_to_address_2',
+        header: 'Address 2',
+        size: 150,
+      },
+      {
+        accessorKey: 'ship_to_city',
+        header: 'City',
+        size: 120,
+      },
+      {
+        accessorKey: 'ship_to_state',
+        header: 'State',
+        size: 100,
+      },
+      {
+        accessorKey: 'ship_to_zip',
+        header: 'ZIP',
+        size: 100,
+      },
+      {
+        accessorKey: 'ship_to_country_code',
+        header: 'Country',
+        size: 100,
       },
       {
         accessorKey: 'tracking_number',
         header: 'Tracking #',
-        size: 150,
+        size: 130,
         Cell: ({ cell }) => (
           <Chip
             label={cell.getValue() || 'No Tracking'}
@@ -164,9 +197,71 @@ const USShippingList = () => {
         size: 150,
       },
       {
+        accessorKey: 'weight_lbs',
+        header: 'Weight (lbs)',
+        size: 120,
+      },
+      {
+        accessorKey: 'length_in',
+        header: 'Length (in)',
+        size: 120,
+      },
+      {
+        accessorKey: 'width_in',
+        header: 'Width (in)',
+        size: 120,
+      },
+      {
+        accessorKey: 'height_in',
+        header: 'Height (in)',
+        size: 120,
+      },
+      {
+        accessorKey: 'base_chg',
+        header: 'Base Charge',
+        size: 120,
+        Cell: ({ cell }) => formatCurrency(cell.getValue()),
+      },
+      {
+        accessorKey: 'carrier_peak_charge',
+        header: 'Carrier Peak',
+        size: 120,
+        Cell: ({ cell }) => formatCurrency(cell.getValue()),
+      },
+      {
+        accessorKey: 'wizmo_peak_charge',
+        header: 'Wizmo Peak',
+        size: 120,
+        Cell: ({ cell }) => formatCurrency(cell.getValue()),
+      },
+      {
+        accessorKey: 'accessorial_charges',
+        header: 'Accessorial',
+        size: 120,
+        Cell: ({ cell }) => formatCurrency(cell.getValue()),
+      },
+      {
+        accessorKey: 'rate',
+        header: 'Rate',
+        size: 120,
+        Cell: ({ cell }) => formatCurrency(cell.getValue()),
+      },
+      {
+        accessorKey: 'hst',
+        header: 'HST',
+        size: 100,
+        Cell: ({ cell }) => formatCurrency(cell.getValue()),
+      },
+      {
+        accessorKey: 'gst',
+        header: 'GST',
+        size: 100,
+        Cell: ({ cell }) => formatCurrency(cell.getValue()),
+      },
+      {
         accessorKey: 'current_status',
         header: 'Status',
-        size: 150,
+        size: 120,
         Cell: ({ cell }) => (
           <Chip
             label={cell.getValue()}
@@ -181,28 +276,39 @@ const USShippingList = () => {
         })) || [],
       },
       {
-        accessorKey: 'ship_date',
-        header: 'Ship Date',
+        accessorKey: 'delivery_status',
+        header: 'Delivery',
         size: 120,
-        Cell: ({ cell }) => 
-          cell.getValue() 
+        Cell: ({ cell }) => (
+          <Chip
+            label={cell.getValue()}
+            color={getStatusColor(cell.getValue())}
+            size="small"
+          />
+        ),
+      },
+      {
+        accessorKey: 'first_attempt_date',
+        header: 'First Attempt',
+        size: 120,
+        Cell: ({ cell }) =>
+          cell.getValue()
             ? new Date(cell.getValue()).toLocaleDateString()
-            : 'Not Shipped',
+            : 'N/A',
       },
       {
         accessorKey: 'delivery_date',
-        header: 'Delivery Date',
+        header: 'Delivered',
         size: 120,
-        Cell: ({ cell }) => 
-          cell.getValue() 
+        Cell: ({ cell }) =>
+          cell.getValue()
             ? new Date(cell.getValue()).toLocaleDateString()
             : 'Not Delivered',
       },
       {
-        accessorKey: 'total_charges',
-        header: 'Total',
+        accessorKey: 'days_to_first_deliver',
+        header: 'Days to Deliver',
         size: 120,
-        Cell: ({ cell }) => formatCurrency(cell.getValue()),
       },
       {
         id: 'actions',

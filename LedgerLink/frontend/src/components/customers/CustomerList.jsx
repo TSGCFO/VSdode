@@ -77,14 +77,9 @@ const CustomerList = () => {
         size: 200,
       },
       {
-        accessorKey: 'contact_name',
-        header: 'Contact Name',
-        size: 150,
-      },
-      {
-        accessorKey: 'business_type',
-        header: 'Business Type',
-        size: 150,
+        accessorKey: 'legal_business_name',
+        header: 'Legal Name',
+        size: 200,
       },
       {
         accessorKey: 'email',
@@ -97,11 +92,39 @@ const CustomerList = () => {
         size: 150,
       },
       {
+        accessorKey: 'address',
+        header: 'Address',
+        size: 200,
+      },
+      {
+        accessorKey: 'city',
+        header: 'City',
+        size: 150,
+      },
+      {
+        accessorKey: 'state',
+        header: 'State',
+        size: 100,
+      },
+      {
+        accessorKey: 'zip',
+        header: 'ZIP',
+        size: 100,
+      },
+      {
+        accessorKey: 'country',
+        header: 'Country',
+        size: 150,
+      },
+      {
+        accessorKey: 'business_type',
+        header: 'Business Type',
+        size: 150,
+      },
+      {
         accessorKey: 'is_active',
         header: 'Status',
         size: 100,
-        // eslint-disable-next-line react/prop-types
-        // eslint-disable-next-line react/prop-types
         Cell: ({ cell }) => (
           <Chip
             label={cell.getValue() ? 'Active' : 'Inactive'}
@@ -114,6 +137,18 @@ const CustomerList = () => {
           { text: 'Active', value: true },
           { text: 'Inactive', value: false },
         ],
+      },
+      {
+        accessorKey: 'created_at',
+        header: 'Created',
+        size: 150,
+        Cell: ({ cell }) => new Date(cell.getValue()).toLocaleString(),
+      },
+      {
+        accessorKey: 'updated_at',
+        header: 'Updated',
+        size: 150,
+        Cell: ({ cell }) => new Date(cell.getValue()).toLocaleString(),
       },
       {
         id: 'actions',

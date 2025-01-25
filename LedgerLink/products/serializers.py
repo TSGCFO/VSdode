@@ -7,74 +7,57 @@ class ProductSerializer(serializers.ModelSerializer):
     Serializer for Product model providing CRUD operations.
     Includes calculated fields and validation.
     """
-    is_in_stock = serializers.BooleanField(read_only=True)
-    profit_margin = serializers.FloatField(read_only=True)
+    customer_details = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = [
-            'id', 'name', 'sku', 'description', 'price', 'cost',
-            'stock_quantity', 'category', 'is_active', 'is_in_stock',
-            'profit_margin', 'created_at', 'updated_at'
+            'id', 'sku', 'customer', 'customer_details',
+            'labeling_unit_1', 'labeling_quantity_1',
+            'labeling_unit_2', 'labeling_quantity_2',
+            'labeling_unit_3', 'labeling_quantity_3',
+            'labeling_unit_4', 'labeling_quantity_4',
+            'labeling_unit_5', 'labeling_quantity_5',
+            'created_at', 'updated_at'
         ]
         read_only_fields = ['created_at', 'updated_at']
 
+    def get_customer_details(self, obj):
+        if obj.customer:
+            return {
+                'id': obj.customer.id,
+                'company_name': obj.customer.company_name
+            }
+        return None
+
     def validate_sku(self, value):
         """
-        Validate that the SKU is unique (case-insensitive).
+        Validate that the SKU is unique for this customer.
         """
         value = value.upper()
-        if self.instance is None:  # Creating new product
-            if Product.objects.filter(sku__iexact=value).exists():
-                raise serializers.ValidationError(
-                    "A product with this SKU already exists."
-                )
-        else:  # Updating existing product
-            if Product.objects.filter(
+        customer = self.initial_data.get('customer')
+        if customer:
+            existing = Product.objects.filter(
+                customer=customer,
                 sku__iexact=value
-            ).exclude(id=self.instance.id).exists():
+            )
+            if self.instance:
+                existing = existing.exclude(id=self.instance.id)
+            
+            if existing.exists():
                 raise serializers.ValidationError(
-                    "A product with this SKU already exists."
+                    "This SKU is already in use for this customer."
                 )
-        return value
-
-    def validate_price(self, value):
-        """
-        Validate that the price is positive.
-        """
-        if value <= Decimal('0'):
-            raise serializers.ValidationError(
-                "Price must be greater than zero."
-            )
-        return value
-
-    def validate_cost(self, value):
-        """
-        Validate that the cost is non-negative if provided.
-        """
-        if value is not None and value < Decimal('0'):
-            raise serializers.ValidationError(
-                "Cost cannot be negative."
-            )
         return value
 
     def validate(self, data):
         """
-        Cross-field validation.
+        Validate labeling quantities are non-negative.
         """
-        # Ensure cost is not greater than price if both are provided
-        price = data.get('price')
-        cost = data.get('cost')
-        if price and cost and cost > price:
-            raise serializers.ValidationError({
-                'cost': "Cost cannot be greater than price."
-            })
-
-        # Ensure stock quantity is non-negative
-        stock_quantity = data.get('stock_quantity')
-        if stock_quantity is not None and stock_quantity < 0:
-            raise serializers.ValidationError({
-                'stock_quantity': "Stock quantity cannot be negative."
-            })
-
+        for i in range(1, 6):
+            qty = data.get(f'labeling_quantity_{i}')
+            if qty is not None and qty < 0:
+                raise serializers.ValidationError({
+                    f'labeling_quantity_{i}': "Quantity cannot be negative."
+                })
         return data

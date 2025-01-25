@@ -141,10 +141,11 @@ export const productApi = {
   list: (params = {}) => {
     const queryParams = new URLSearchParams();
     if (params.search) queryParams.append('search', params.search);
-    if (params.category) queryParams.append('category', params.category);
+    if (params.customer) queryParams.append('customer', params.customer);
     const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
     return request(`/products/${query}`);
   },
+  getStats: () => request('/products/stats/'),
   get: (id) => request(`/products/${id}/`),
   create: (data) => request('/products/', {
     method: 'POST',
