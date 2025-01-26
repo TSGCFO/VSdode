@@ -79,8 +79,8 @@ const ProductForm = () => {
   const fetchCustomers = async () => {
     try {
       const response = await customerApi.list();
-      if (response) {
-        setCustomers(response);
+      if (response.success) {
+        setCustomers(response.data);
       }
     } catch (error) {
       setError(handleApiError(error));
@@ -227,7 +227,7 @@ const ProductForm = () => {
                 >
                   {customers.map((customer) => (
                     <MenuItem key={customer.id} value={customer.id}>
-                      {customer.name}
+                      {customer.company_name}
                     </MenuItem>
                   ))}
                 </Select>

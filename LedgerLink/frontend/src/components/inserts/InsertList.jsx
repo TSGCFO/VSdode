@@ -46,6 +46,8 @@ const InsertList = () => {
       const response = await insertApi.list(params);
       if (response.success) {
         setInserts(response.data);
+      } else {
+        console.error('Failed to fetch inserts:', response);
       }
     } catch (error) {
       setError(handleApiError(error));
@@ -57,6 +59,8 @@ const InsertList = () => {
       const response = await customerApi.list();
       if (response.success) {
         setCustomers(response.data);
+      } else {
+        console.error('Failed to fetch customers:', response);
       }
     } catch (error) {
       setError(handleApiError(error));

@@ -37,6 +37,9 @@ const CustomerList = () => {
       const response = await customerApi.list(params);
       if (response.success) {
         setCustomers(response.data);
+        console.log('Customers data:', response.data);
+      } else {
+        console.error('Failed to fetch customers:', response);
       }
     } catch (error) {
       setError(handleApiError(error));

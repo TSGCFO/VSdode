@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from django.db.models import Q
+from django.db.models import Q, Sum
 from .models import Insert
 from .serializers import InsertSerializer
 
@@ -146,7 +146,7 @@ class InsertViewSet(viewsets.ModelViewSet):
         """
         total_inserts = self.get_queryset().count()
         total_quantity = self.get_queryset().aggregate(
-            total=models.Sum('insert_quantity')
+            total=Sum('insert_quantity')
         )['total'] or 0
         
         return Response({

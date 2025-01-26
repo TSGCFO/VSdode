@@ -16,7 +16,9 @@ async function request(endpoint, options = {}) {
   };
 
   try {
+    console.log('Making API request to:', url);
     const response = await fetch(url, { ...options, headers });
+    console.log('API response status:', response.status);
     
     if (response.status === 401) {
       // Token might be expired, try to refresh
@@ -46,6 +48,7 @@ async function request(endpoint, options = {}) {
     }
 
     const data = await response.json();
+    console.log('API response data:', data);
 
     if (!response.ok) {
       throw {
@@ -65,8 +68,11 @@ async function request(endpoint, options = {}) {
  * Customer API endpoints
  */
 export const customerApi = {
-  list: (search = '') => {
-    const query = search ? `?search=${encodeURIComponent(search)}` : '';
+  list: (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.search) queryParams.append('search', params.search);
+    if (params.business_type) queryParams.append('business_type', params.business_type);
+    const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
     return request(`/customers/${query}`);
   },
   get: (id) => request(`/customers/${id}/`),
@@ -213,6 +219,11 @@ export const insertApi = {
   }),
   delete: (id) => request(`/inserts/${id}/`, {
     method: 'DELETE',
+  }),
+  getStats: () => request('/inserts/stats/'),
+  updateQuantity: (id, quantity, operation) => request(`/inserts/${id}/update_quantity/`, {
+    method: 'POST',
+    body: JSON.stringify({ quantity, operation }),
   }),
 };
 
