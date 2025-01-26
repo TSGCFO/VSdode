@@ -239,13 +239,17 @@ const InsertForm = () => {
                   label="SKU"
                   disabled={!formData.customer || isEditMode}
                 >
-                  {[...availableSkus]
-                    .sort((a, b) => a.sku.localeCompare(b.sku))
-                    .map((product) => (
-                    <MenuItem key={product.id} value={product.sku}>
-                      {product.sku}
-                    </MenuItem>
-                  ))}
+                  {availableSkus.length === 0 ? (
+                    <MenuItem disabled>No SKUs available for this customer</MenuItem>
+                  ) : (
+                    [...availableSkus]
+                      .sort((a, b) => a.sku.localeCompare(b.sku))
+                      .map((product) => (
+                        <MenuItem key={product.id} value={product.sku}>
+                          {product.sku}
+                        </MenuItem>
+                      ))
+                  )}
                 </Select>
                 {errors.sku && (
                   <Typography color="error" variant="caption">
