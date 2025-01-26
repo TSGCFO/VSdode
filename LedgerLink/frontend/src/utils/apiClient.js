@@ -138,6 +138,7 @@ export const serviceApi = {
   delete: (id) => request(`/services/${id}/`, {
     method: 'DELETE',
   }),
+  getChoices: () => request('/services/choices/'),
 };
 
 /**

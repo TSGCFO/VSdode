@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import CustomerService
 from customers.serializers import CustomerSerializer
 from services.models import Service
+from services.serializers import ServiceSerializer
 from products.models import Product
 
 class CustomerServiceSerializer(serializers.ModelSerializer):
@@ -9,17 +10,17 @@ class CustomerServiceSerializer(serializers.ModelSerializer):
     Serializer for CustomerService model with nested customer and service details.
     """
     customer_details = CustomerSerializer(source='customer', read_only=True)
-    service_name = serializers.CharField(source='service.name', read_only=True)
+    service_details = ServiceSerializer(source='service', read_only=True)
     sku_list = serializers.ListField(source='get_sku_list', read_only=True)
-
     class Meta:
         model = CustomerService
         fields = [
-            'id', 'customer', 'customer_details', 
-            'service', 'service_name', 'unit_price',
+            'id', 'customer', 'customer_details',
+            'service', 'service_details', 'unit_price',
             'sku_list', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at', 'customer_details', 'service_details']
+    read_only_fields = ['created_at', 'updated_at', 'customer_details', 'service_details']
 
     def validate(self, data):
         """

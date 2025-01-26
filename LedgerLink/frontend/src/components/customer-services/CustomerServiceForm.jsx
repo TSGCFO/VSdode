@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -17,7 +17,7 @@ import {
   OutlinedInput,
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { customerServiceApi, customerApi, handleApiError } from '../../utils/apiClient';
+import { customerServiceApi, customerApi, serviceApi, productApi, handleApiError } from '../../utils/apiClient';
 
 const CustomerServiceForm = () => {
   const navigate = useNavigate();
@@ -41,11 +41,17 @@ const CustomerServiceForm = () => {
   useEffect(() => {
     fetchCustomers();
     fetchServices();
-    fetchSkus();
     if (isEditMode) {
       fetchCustomerService();
     }
   }, [id]);
+
+  // Fetch SKUs when editing and customer service is loaded
+  useEffect(() => {
+    if (isEditMode && formData.customer) {
+      fetchSkus(formData.customer);
+    }
+  }, [formData.customer, isEditMode]);
 
   const fetchCustomerService = async () => {
     try {
@@ -79,21 +85,25 @@ const CustomerServiceForm = () => {
 
   const fetchServices = async () => {
     try {
-      // Assuming there's a serviceApi similar to customerApi
-      const response = await fetch('/api/services/');
-      const data = await response.json();
-      setServices(data);
+      const response = await serviceApi.list();
+      if (response.success) {
+        setServices(response.data);
+      }
     } catch (error) {
       setError(handleApiError(error));
     }
   };
 
-  const fetchSkus = async () => {
+  const fetchSkus = async (customerId) => {
     try {
-      // Assuming there's an endpoint to fetch available SKUs
-      const response = await fetch('/api/products/');
-      const data = await response.json();
-      setAvailableSkus(data);
+      if (!customerId) {
+        setAvailableSkus([]);
+        return;
+      }
+      const response = await productApi.list({ customer: customerId });
+      if (response.success) {
+        setAvailableSkus(response.data);
+      }
     } catch (error) {
       setError(handleApiError(error));
     }
@@ -124,13 +134,19 @@ const CustomerServiceForm = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
+      // Clear SKUs when customer changes
+      ...(name === 'customer' ? { skus: [] } : {})
     }));
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
         [name]: null
       }));
+    }
+    // Fetch SKUs when customer changes
+    if (name === 'customer') {
+      fetchSkus(value);
     }
   };
 
@@ -247,7 +263,7 @@ const CustomerServiceForm = () => {
                 >
                   {services.map((service) => (
                     <MenuItem key={service.id} value={service.id}>
-                      {service.name}
+                      {service.service_name}
                     </MenuItem>
                   ))}
                 </Select>

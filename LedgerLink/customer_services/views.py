@@ -29,7 +29,7 @@ class CustomerServiceViewSet(viewsets.ModelViewSet):
         if search:
             queryset = queryset.filter(
                 Q(customer__company_name__icontains=search) |
-                Q(service__name__icontains=search)
+                Q(service__service_name__icontains=search)
             )
         
         return queryset.select_related('customer', 'service')

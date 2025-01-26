@@ -98,9 +98,10 @@ const CustomerServiceList = () => {
         })),
       },
       {
-        accessorKey: 'service_details.name',
+        accessorKey: 'service_details.service_name',
         header: 'Service',
         size: 200,
+        Cell: ({ cell }) => cell.getValue() || 'N/A',
       },
       {
         accessorKey: 'unit_price',
