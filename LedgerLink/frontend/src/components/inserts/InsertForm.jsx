@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -15,7 +15,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { insertApi, customerApi, handleApiError } from '../../utils/apiClient';
+import { insertApi, customerApi, productApi, handleApiError } from '../../utils/apiClient';
 
 const InsertForm = () => {
   const navigate = useNavigate();
@@ -29,6 +29,7 @@ const InsertForm = () => {
     customer: ''
   });
   const [customers, setCustomers] = useState([]);
+  const [availableSkus, setAvailableSkus] = useState([]);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -40,6 +41,13 @@ const InsertForm = () => {
       fetchInsert();
     }
   }, [id]);
+
+  // Fetch SKUs when customer is set in edit mode
+  useEffect(() => {
+    if (formData.customer) {
+      fetchSkusByCustomer(formData.customer);
+    }
+  }, [formData.customer]);
 
   const fetchInsert = async () => {
     try {
@@ -94,12 +102,34 @@ const InsertForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const fetchSkusByCustomer = async (customerId) => {
+    try {
+      const response = await productApi.getSkusByCustomer(customerId);
+      if (response.success) {
+        setAvailableSkus(response.data);
+        // Clear SKU when customer changes
+        setFormData(prev => ({
+          ...prev,
+          sku: ''
+        }));
+      }
+    } catch (error) {
+      setError(handleApiError(error));
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+
+    // Fetch SKUs when customer changes
+    if (name === 'customer' && value) {
+      fetchSkusByCustomer(value);
+    }
+
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -200,17 +230,29 @@ const InsertForm = () => {
             </Grid>
 
             <Grid item xs={12} sm={6}>
-              <TextField
-                required
-                fullWidth
-                label="SKU"
-                name="sku"
-                value={formData.sku}
-                onChange={handleChange}
-                error={Boolean(errors.sku)}
-                helperText={errors.sku}
-                disabled={isEditMode}
-              />
+              <FormControl fullWidth error={Boolean(errors.sku)}>
+                <InputLabel>SKU</InputLabel>
+                <Select
+                  name="sku"
+                  value={formData.sku}
+                  onChange={handleChange}
+                  label="SKU"
+                  disabled={!formData.customer || isEditMode}
+                >
+                  {[...availableSkus]
+                    .sort((a, b) => a.sku.localeCompare(b.sku))
+                    .map((product) => (
+                    <MenuItem key={product.id} value={product.sku}>
+                      {product.sku}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {errors.sku && (
+                  <Typography color="error" variant="caption">
+                    {errors.sku}
+                  </Typography>
+                )}
+              </FormControl>
             </Grid>
 
             <Grid item xs={12} sm={6}>

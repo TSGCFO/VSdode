@@ -164,6 +164,7 @@ export const productApi = {
   delete: (id) => request(`/products/${id}/`, {
     method: 'DELETE',
   }),
+  getSkusByCustomer: (customerId) => request(`/products/?customer=${customerId}`),
 };
 
 /**
@@ -219,11 +220,6 @@ export const insertApi = {
   }),
   delete: (id) => request(`/inserts/${id}/`, {
     method: 'DELETE',
-  }),
-  getStats: () => request('/inserts/stats/'),
-  updateQuantity: (id, quantity, operation) => request(`/inserts/${id}/update_quantity/`, {
-    method: 'POST',
-    body: JSON.stringify({ quantity, operation }),
   }),
   getStats: () => request('/inserts/stats/'),
   updateQuantity: (id, quantity, operation) => request(`/inserts/${id}/update_quantity/`, {
