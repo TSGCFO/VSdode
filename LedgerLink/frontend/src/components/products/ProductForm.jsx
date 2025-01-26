@@ -103,16 +103,20 @@ const ProductForm = () => {
       const quantityField = `labeling_quantity_${i}`;
       const unitField = `labeling_unit_${i}`;
       
-      if (formData[quantityField] && formData[quantityField] < 0) {
-        newErrors[quantityField] = 'Quantity cannot be negative';
-      }
+      const quantity = formData[quantityField];
+      const unit = formData[unitField];
 
-      // If quantity is provided, unit is required and vice versa
-      if (formData[quantityField] && !formData[unitField]) {
-        newErrors[unitField] = 'Unit is required when quantity is provided';
-      }
-      if (formData[unitField] && !formData[quantityField]) {
-        newErrors[quantityField] = 'Quantity is required when unit is provided';
+      // Only validate if either quantity or unit is provided
+      if (quantity !== '' || unit !== '') {
+        if (quantity === '') {
+          newErrors[quantityField] = 'Quantity is required when unit is provided';
+        } else if (parseInt(quantity, 10) < 0) {
+          newErrors[quantityField] = 'Quantity cannot be negative';
+        }
+
+        if (!unit) {
+          newErrors[unitField] = 'Unit is required when quantity is provided';
+        }
       }
     }
     
@@ -122,10 +126,18 @@ const ProductForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    // Convert quantity fields to integers
+    if (name.startsWith('labeling_quantity_')) {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value === '' ? '' : parseInt(value, 10)
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -146,9 +158,22 @@ const ProductForm = () => {
     setSuccess(false);
 
     try {
+      // Clean up empty values
+      const cleanedData = Object.fromEntries(
+        Object.entries(formData).map(([key, value]) => {
+          if (key.startsWith('labeling_quantity_') && value === '') {
+            return [key, null];
+          }
+          if (key.startsWith('labeling_unit_') && value === '') {
+            return [key, null];
+          }
+          return [key, value];
+        })
+      );
+
       const apiCall = isEditMode
-        ? () => productApi.update(id, formData)
-        : () => productApi.create(formData);
+        ? () => productApi.update(id, cleanedData)
+        : () => productApi.create(cleanedData);
 
       const response = await apiCall();
 
