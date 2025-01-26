@@ -225,6 +225,11 @@ export const insertApi = {
     method: 'POST',
     body: JSON.stringify({ quantity, operation }),
   }),
+  getStats: () => request('/inserts/stats/'),
+  updateQuantity: (id, quantity, operation) => request(`/inserts/${id}/update_quantity/`, {
+    method: 'POST',
+    body: JSON.stringify({ quantity, operation }),
+  }),
 };
 
 /**

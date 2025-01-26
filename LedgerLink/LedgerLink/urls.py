@@ -39,6 +39,7 @@ api_patterns = [
     path('billing/', include('billing.urls')),
     path('services/', include('services.urls')),
     path('shipping/', include('shipping.urls')),
+    path('inserts/', include('inserts.urls')),
 ]
 
 urlpatterns = [
