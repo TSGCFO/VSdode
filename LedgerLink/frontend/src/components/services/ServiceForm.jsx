@@ -49,15 +49,12 @@ const ServiceForm = () => {
       setLoading(true);
       const response = await serviceApi.get(id);
       console.log('Service data:', response);
-      if (response.success && response.data) {
-        const { service_name, description, charge_type } = response.data;
+      if (response) {
         setFormData({
-          service_name: service_name || '',
-          description: description || '',
-          charge_type: charge_type || 'quantity'
+          service_name: response.service_name,
+          description: response.description || '',
+          charge_type: response.charge_type
         });
-      } else {
-        setError('Failed to load service data');
       }
     } catch (error) {
       setError(handleApiError(error));

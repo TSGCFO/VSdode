@@ -64,13 +64,19 @@ const CustomerServiceForm = () => {
     try {
       setLoading(true);
       const response = await customerServiceApi.get(id);
-      if (response.success) {
+      if (response) {
+        console.log('Customer Service data:', response);
         setFormData({
-          customer: response.data.customer,
-          service: response.data.service,
-          unit_price: response.data.unit_price,
-          skus: response.data.sku_list || []
+          customer: response.customer,
+          service: response.service,
+          unit_price: response.unit_price,
+          skus: response.sku_list || []
         });
+
+        // Fetch SKUs for the selected customer
+        if (response.customer) {
+          fetchSkus(response.customer);
+        }
       }
     } catch (error) {
       setError(handleApiError(error));
