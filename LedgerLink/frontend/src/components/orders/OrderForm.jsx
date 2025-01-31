@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -39,7 +39,7 @@ const OrderForm = () => {
     ship_to_zip: '',
     ship_to_country: '',
     weight_lb: '',
-    sku_quantity: {},
+    sku_quantity: { '': 0 },  // Initialize as an object mapping SKUs to quantities
     notes: '',
     carrier: ''
   });
@@ -131,14 +131,16 @@ const OrderForm = () => {
     }
 
     // Validate SKU quantities
-    if (Object.keys(formData.sku_quantity).length === 0) {
+    const skuEntries = Object.entries(formData.sku_quantity);
+    if (skuEntries.length === 0) {
       newErrors.sku_quantity = 'At least one SKU is required';
     } else {
-      Object.entries(formData.sku_quantity).forEach(([sku, qty]) => {
-        if (!qty || qty <= 0) {
-          newErrors.sku_quantity = 'All quantities must be positive numbers';
+      for (const [sku, qty] of skuEntries) {
+        if (!sku || !qty || qty <= 0) {
+          newErrors.sku_quantity = 'All SKUs must have valid quantities';
+          break;
         }
-      });
+      }
     }
     
     setErrors(newErrors);
@@ -159,14 +161,29 @@ const OrderForm = () => {
     }
   };
 
-  const handleSkuChange = (sku, value) => {
-    setFormData(prev => ({
-      ...prev,
-      sku_quantity: {
-        ...prev.sku_quantity,
-        [sku]: parseInt(value) || 0
-      }
-    }));
+  const handleSkuChange = (oldSku, field, value) => {
+    if (field === 'sku') {
+      // Handle SKU name change
+      setFormData(prev => {
+        const newSkuQuantity = { ...prev.sku_quantity };
+        const quantity = newSkuQuantity[oldSku];
+        delete newSkuQuantity[oldSku];
+        newSkuQuantity[value] = quantity;
+        return {
+          ...prev,
+          sku_quantity: newSkuQuantity
+        };
+      });
+    } else {
+      // Handle quantity change
+      setFormData(prev => ({
+        ...prev,
+        sku_quantity: {
+          ...prev.sku_quantity,
+          [oldSku]: parseInt(value) || 0
+        }
+      }));
+    }
     if (errors.sku_quantity) {
       setErrors(prev => ({
         ...prev,
@@ -186,12 +203,14 @@ const OrderForm = () => {
   };
 
   const removeSkuField = (sku) => {
-    const newSkuQuantity = { ...formData.sku_quantity };
-    delete newSkuQuantity[sku];
-    setFormData(prev => ({
-      ...prev,
-      sku_quantity: newSkuQuantity
-    }));
+    setFormData(prev => {
+      const newSkuQuantity = { ...prev.sku_quantity };
+      delete newSkuQuantity[sku];
+      return {
+        ...prev,
+        sku_quantity: newSkuQuantity
+      };
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -206,20 +225,40 @@ const OrderForm = () => {
     setSuccess(false);
 
     try {
+      // Filter out empty SKUs and format data
+      const filteredSkuQuantity = {};
+      Object.entries(formData.sku_quantity)
+        .filter(([sku, qty]) => sku.trim() && qty > 0)
+        .forEach(([sku, qty]) => {
+          filteredSkuQuantity[sku.trim()] = parseInt(qty);
+        });
+
+      // Calculate total quantity and line items
+      const totalQty = Object.values(filteredSkuQuantity).reduce((sum, qty) => sum + qty, 0);
+      const lineItems = Object.keys(filteredSkuQuantity).length;
+
+      const dataToSend = {
+        ...formData,
+        sku_quantity: filteredSkuQuantity,
+        total_item_qty: totalQty,
+        line_items: lineItems
+      };
+
       const apiCall = isEditMode
-        ? () => orderApi.update(id, formData)
-        : () => orderApi.create(formData);
+        ? () => orderApi.update(id, dataToSend)
+        : () => orderApi.create(dataToSend);
 
       const response = await apiCall();
 
       if (response.success) {
         setSuccess(true);
-        setTimeout(() => {
-          navigate('/orders');
-        }, 1500);
+        navigate('/orders');
+      } else {
+        setError(response.message || 'Failed to create order');
       }
     } catch (error) {
-      setError(handleApiError(error));
+      console.error('Order submission error:', error);
+      setError(handleApiError(error) || 'Failed to process order. Please check your input and try again.');
     } finally {
       setLoading(false);
     }
@@ -457,29 +496,21 @@ const OrderForm = () => {
                     {errors.sku_quantity}
                   </Typography>
                 )}
-                {Object.entries(formData.sku_quantity).map(([sku, qty], index) => (
-                  <Box key={index} sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                {Object.entries(formData.sku_quantity).map(([sku, quantity]) => (
+                  <Box key={sku} sx={{ display: 'flex', gap: 2, mb: 2 }}>
                     <TextField
                       label="SKU"
                       value={sku}
-                      onChange={(e) => {
-                        const newSkuQuantity = { ...formData.sku_quantity };
-                        const oldQty = newSkuQuantity[sku];
-                        delete newSkuQuantity[sku];
-                        newSkuQuantity[e.target.value] = oldQty;
-                        setFormData(prev => ({
-                          ...prev,
-                          sku_quantity: newSkuQuantity
-                        }));
-                      }}
+                      onChange={(e) => handleSkuChange(sku, 'sku', e.target.value)}
                       sx={{ flex: 2 }}
                     />
                     <TextField
                       type="number"
                       label="Quantity"
-                      value={qty}
-                      onChange={(e) => handleSkuChange(sku, e.target.value)}
+                      value={quantity}
+                      onChange={(e) => handleSkuChange(sku, 'quantity', e.target.value)}
                       sx={{ flex: 1 }}
+                      inputProps={{ min: "0" }}
                     />
                     <IconButton
                       size="small"

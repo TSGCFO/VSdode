@@ -41,6 +41,16 @@ class OrderSerializer(serializers.ModelSerializer):
                     )
         return value
 
+    def create(self, validated_data):
+        """
+        Create a new order with a generated transaction_id.
+        """
+        # Generate a transaction_id (using the current timestamp as a simple example)
+        from django.utils import timezone
+        import time
+        validated_data['transaction_id'] = int(time.time() * 1000)  # milliseconds since epoch
+        return super().create(validated_data)
+
     def validate(self, data):
         """
         Custom validation for the entire order.

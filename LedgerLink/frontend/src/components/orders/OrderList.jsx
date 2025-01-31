@@ -9,6 +9,7 @@ import {
   Snackbar,
   Grid,
   Chip,
+  Tooltip,
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -200,6 +201,54 @@ const OrderList = () => {
         size: 120,
       },
       {
+        accessorKey: 'sku_quantity',
+        header: 'SKU Quantities',
+        size: 200,
+        Cell: ({ cell }) => {
+          const skuQuantities = cell.getValue();
+          if (!skuQuantities) return '';
+          
+          try {
+            // Parse the JSON if it's a string
+            const quantities = typeof skuQuantities === 'string'
+              ? JSON.parse(skuQuantities)
+              : skuQuantities;
+              
+            const formattedText = Object.entries(quantities)
+              .map(([sku, qty]) => `${sku}(${qty})`)
+              .join(', ');
+            
+            // Create a more readable format for tooltip
+            const tooltipText = Object.entries(quantities)
+              .map(([sku, qty]) => `${sku}: ${qty}`)
+              .join('\n');
+            
+            return (
+              <Tooltip
+                title={<pre style={{ margin: 0 }}>{tooltipText}</pre>}
+                arrow
+                placement="top"
+              >
+                <Box
+                  component="span"
+                  sx={{
+                    display: 'block',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {formattedText}
+                </Box>
+              </Tooltip>
+            );
+          } catch (error) {
+            console.error('Error parsing SKU quantities:', error);
+            return '';
+          }
+        },
+      },
+      {
         accessorKey: 'line_items',
         header: 'Line Items',
         size: 100,
@@ -347,6 +396,8 @@ const OrderList = () => {
           enableGlobalFilter
           enablePagination
           enableSorting
+          enableColumnResizing
+          columnResizeMode="onChange"
           muiToolbarAlertBannerProps={
             error
               ? {
@@ -366,7 +417,7 @@ const OrderList = () => {
           )}
           muiTableProps={{
             sx: {
-              tableLayout: 'fixed',
+              tableLayout: 'auto', // Changed from 'fixed' to allow column resizing
             },
           }}
           initialState={{
