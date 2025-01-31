@@ -24,6 +24,7 @@ import {
   Inventory as InventoryIcon,
   Description as DescriptionIcon,
   LocalShipping as LocalShippingIcon,
+  Rule as RuleIcon,
 } from '@mui/icons-material';
 
 // Import our components
@@ -46,6 +47,7 @@ import CADShippingList from './components/shipping/CADShippingList';
 import CADShippingForm from './components/shipping/CADShippingForm';
 import USShippingList from './components/shipping/USShippingList';
 import USShippingForm from './components/shipping/USShippingForm';
+import RulesManagement from './components/rules/RulesManagement';
 
 // Create theme
 const theme = createTheme({
@@ -150,6 +152,12 @@ function App() {
                     </ListItemIcon>
                     <ListItemText primary="Inserts" />
                   </ListItem>
+                  <ListItem button component={Link} to="/rules">
+                    <ListItemIcon>
+                      <RuleIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="Rules" />
+                  </ListItem>
                   <ListItem button component={Link} to="/shipping/cad">
                     <ListItemIcon>
                       <LocalShippingIcon />
@@ -211,6 +219,7 @@ function App() {
                 <Route path="/orders" element={<ProtectedRoute><OrderList /></ProtectedRoute>} />
                 <Route path="/orders/new" element={<ProtectedRoute><OrderForm /></ProtectedRoute>} />
                 <Route path="/orders/:id/edit" element={<ProtectedRoute><OrderForm /></ProtectedRoute>} />
+                <Route path="/rules" element={<ProtectedRoute><RulesManagement /></ProtectedRoute>} />
                 <Route path="/shipping/cad" element={<ProtectedRoute><CADShippingList /></ProtectedRoute>} />
                 <Route path="/shipping/cad/new" element={<ProtectedRoute><CADShippingForm /></ProtectedRoute>} />
                 <Route path="/shipping/cad/:id/edit" element={<ProtectedRoute><CADShippingForm /></ProtectedRoute>} />
