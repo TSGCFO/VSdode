@@ -19,8 +19,7 @@ class CustomerServiceSerializer(serializers.ModelSerializer):
             'service', 'service_details', 'unit_price',
             'sku_list', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['created_at', 'updated_at', 'customer_details', 'service_details']
-    read_only_fields = ['created_at', 'updated_at', 'customer_details', 'service_details']
+        read_only_fields = ['created_at', 'updated_at', 'customer_details', 'service_details', 'sku_list']
 
     def validate(self, data):
         """

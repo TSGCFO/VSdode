@@ -113,6 +113,10 @@ export const customerServiceApi = {
   delete: (id) => request(`/customer-services/${id}/`, {
     method: 'DELETE',
   }),
+  addSkus: (id, data) => request(`/customer-services/${id}/add_skus/`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
 };
 
 /**

@@ -170,15 +170,19 @@ const CustomerServiceForm = () => {
     setSuccess(false);
 
     try {
+      // Create a copy of form data without skus for initial creation
+      const { skus, ...serviceData } = formData;
+      
       const apiCall = isEditMode
-        ? () => customerServiceApi.update(id, formData)
-        : () => customerServiceApi.create(formData);
+        ? () => customerServiceApi.update(id, serviceData)
+        : () => customerServiceApi.create(serviceData);
 
       const response = await apiCall();
 
       if (response.success) {
-        if (formData.skus.length > 0) {
-          await customerServiceApi.addSkus(response.data.id, formData.skus);
+        // If there are SKUs, add them after creation
+        if (skus.length > 0) {
+          await customerServiceApi.addSkus(response.data.id, { sku_ids: skus });
         }
         setSuccess(true);
         setTimeout(() => {

@@ -90,8 +90,28 @@ class CustomerServiceViewSet(viewsets.ModelViewSet):
         Add SKUs to a customer service.
         """
         instance = self.get_object()
-        sku_ids = request.data.get('sku_ids', [])
-        instance.skus.add(*sku_ids)
+        sku_codes = request.data.get('sku_ids', [])
+        
+        # Convert SKU codes to Product instances
+        from products.models import Product
+        products = Product.objects.filter(
+            sku__in=sku_codes,
+            customer=instance.customer  # Only get SKUs for this customer
+        )
+        
+        # Check if all SKUs were found and belong to the customer
+        found_sku_codes = set(products.values_list('sku', flat=True))
+        missing_sku_codes = set(sku_codes) - found_sku_codes
+        
+        if missing_sku_codes:
+            return Response({
+                'success': False,
+                'message': f'SKUs not found or do not belong to this customer: {", ".join(missing_sku_codes)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Add the products to the customer service
+        instance.skus.add(*products)
+        
         serializer = self.get_serializer(instance)
         return Response({
             'success': True,
