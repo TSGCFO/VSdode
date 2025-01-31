@@ -91,8 +91,15 @@ const CustomerForm = () => {
       newErrors.phone = 'Invalid phone number';
     }
 
-    if (formData.zip && !/^[\d-]{5,10}$/.test(formData.zip)) {
-      newErrors.zip = 'Invalid ZIP code';
+    if (formData.zip) {
+      // Canadian postal code format: A1A 1A1
+      const canadianPostalCode = /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/;
+      // US ZIP code format: 12345 or 12345-6789
+      const usZipCode = /^\d{5}(-\d{4})?$/;
+      
+      if (!canadianPostalCode.test(formData.zip) && !usZipCode.test(formData.zip)) {
+        newErrors.zip = 'Invalid postal/ZIP code format';
+      }
     }
     
     setErrors(newErrors);
@@ -280,7 +287,8 @@ const CustomerForm = () => {
                 value={formData.zip}
                 onChange={handleChange}
                 error={Boolean(errors.zip)}
-                helperText={errors.zip}
+                helperText={errors.zip || "Format: A1A 1A1 (Canada) or 12345 / 12345-6789 (US)"}
+                placeholder="A1A 1A1 or 12345"
               />
             </Grid>
 

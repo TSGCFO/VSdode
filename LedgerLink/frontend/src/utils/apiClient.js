@@ -47,17 +47,25 @@ async function request(endpoint, options = {}) {
       }
     }
 
-    const data = await response.json();
-    console.log('API response data:', data);
+    try {
+      const data = await response.json();
+      console.log('API response data:', data);
 
-    if (!response.ok) {
+      if (!response.ok) {
+        throw {
+          status: response.status,
+          message: data.detail || data.message || 'An error occurred',
+        };
+      }
+
+      return data;
+    } catch (jsonError) {
+      // Handle non-JSON responses
       throw {
         status: response.status,
-        message: data.detail || 'An error occurred',
+        message: 'Invalid response from server',
       };
     }
-
-    return data;
   } catch (error) {
     console.error('API Request Error:', error);
     throw error;
@@ -142,7 +150,7 @@ export const serviceApi = {
   delete: (id) => request(`/services/${id}/`, {
     method: 'DELETE',
   }),
-  getChoices: () => request('/services/choices/'),
+  getChargeTypes: () => request('/services/charge_types/'),
 };
 
 /**
@@ -282,19 +290,29 @@ export const usShippingApi = {
 };
 
 export const handleApiError = (error) => {
-  if (error.status === 404) {
-    return 'The requested resource was not found.';
+  if (!error) {
+    return 'An unknown error occurred.';
   }
-  if (error.status === 401) {
-    return 'Please log in to continue.';
+
+  // Handle network errors
+  if (error instanceof TypeError && error.message === 'Failed to fetch') {
+    return 'Network error. Please check your connection.';
   }
-  if (error.status === 403) {
-    return 'You do not have permission to perform this action.';
+
+  switch (error.status) {
+    case 404:
+      return 'The requested resource was not found.';
+    case 401:
+      return 'Please log in to continue.';
+    case 403:
+      return 'You do not have permission to perform this action.';
+    case 400:
+      return error.message || 'Invalid request. Please check your input.';
+    case 500:
+      return 'Server error. Please try again later.';
+    default:
+      return error.message || 'An unexpected error occurred. Please try again later.';
   }
-  if (error.status === 400) {
-    return error.message || 'Invalid request. Please check your input.';
-  }
-  return 'An unexpected error occurred. Please try again later.';
 };
 
 export default {

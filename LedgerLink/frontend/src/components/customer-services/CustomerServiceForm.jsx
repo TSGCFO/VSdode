@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Paper,
@@ -38,22 +38,29 @@ const CustomerServiceForm = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    fetchCustomers();
-    fetchServices();
-    if (isEditMode) {
-      fetchCustomerService();
+  const fetchCustomers = useCallback(async () => {
+    try {
+      const response = await customerApi.list();
+      if (response.success) {
+        setCustomers(response.data);
+      }
+    } catch (error) {
+      setError(handleApiError(error));
     }
-  }, [id]);
+  }, []);
 
-  // Fetch SKUs when editing and customer service is loaded
-  useEffect(() => {
-    if (isEditMode && formData.customer) {
-      fetchSkus(formData.customer);
+  const fetchServices = useCallback(async () => {
+    try {
+      const response = await serviceApi.list();
+      if (response.success) {
+        setServices(response.data);
+      }
+    } catch (error) {
+      setError(handleApiError(error));
     }
-  }, [formData.customer, isEditMode]);
+  }, []);
 
-  const fetchCustomerService = async () => {
+  const fetchCustomerService = useCallback(async () => {
     try {
       setLoading(true);
       const response = await customerServiceApi.get(id);
@@ -70,31 +77,9 @@ const CustomerServiceForm = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const fetchCustomers = async () => {
-    try {
-      const response = await customerApi.list();
-      if (response.success) {
-        setCustomers(response.data);
-      }
-    } catch (error) {
-      setError(handleApiError(error));
-    }
-  };
-
-  const fetchServices = async () => {
-    try {
-      const response = await serviceApi.list();
-      if (response.success) {
-        setServices(response.data);
-      }
-    } catch (error) {
-      setError(handleApiError(error));
-    }
-  };
-
-  const fetchSkus = async (customerId) => {
+  const fetchSkus = useCallback(async (customerId) => {
     try {
       if (!customerId) {
         setAvailableSkus([]);
@@ -107,7 +92,22 @@ const CustomerServiceForm = () => {
     } catch (error) {
       setError(handleApiError(error));
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchCustomers();
+    fetchServices();
+    if (isEditMode) {
+      fetchCustomerService();
+    }
+  }, [id, isEditMode, fetchCustomers, fetchServices, fetchCustomerService]);
+
+  // Fetch SKUs when editing and customer service is loaded
+  useEffect(() => {
+    if (isEditMode && formData.customer) {
+      fetchSkus(formData.customer);
+    }
+  }, [formData.customer, isEditMode, fetchSkus]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -185,9 +185,8 @@ const CustomerServiceForm = () => {
           await customerServiceApi.addSkus(response.data.id, { sku_ids: skus });
         }
         setSuccess(true);
-        setTimeout(() => {
-          navigate('/customer-services');
-        }, 1500);
+        // Navigate immediately instead of using setTimeout
+        navigate('/customer-services');
       }
     } catch (error) {
       setError(handleApiError(error));
@@ -200,7 +199,7 @@ const CustomerServiceForm = () => {
     setError(null);
   };
 
-  if (loading && isEditMode) {
+  if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
         <CircularProgress />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Paper,
@@ -25,7 +25,7 @@ const ServiceForm = () => {
   const [formData, setFormData] = useState({
     service_name: '',
     description: '',
-    charge_type: 'quantity'
+    charge_type: 'quantity'  // Use the default value from the backend
   });
   const [chargeTypes, setChargeTypes] = useState([]);
   const [errors, setErrors] = useState({});
@@ -33,32 +33,7 @@ const ServiceForm = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    fetchChargeTypes();
-    if (isEditMode) {
-      fetchService();
-    }
-  }, [id]);
-
-  const fetchService = async () => {
-    try {
-      setLoading(true);
-      const response = await serviceApi.get(id);
-      if (response.success) {
-        setFormData({
-          service_name: response.data.service_name,
-          description: response.data.description || '',
-          charge_type: response.data.charge_type
-        });
-      }
-    } catch (error) {
-      setError(handleApiError(error));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchChargeTypes = async () => {
+  const fetchChargeTypes = useCallback(async () => {
     try {
       const response = await serviceApi.getChargeTypes();
       if (response.success) {
@@ -67,7 +42,36 @@ const ServiceForm = () => {
     } catch (error) {
       setError(handleApiError(error));
     }
-  };
+  }, []);
+
+  const fetchService = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await serviceApi.get(id);
+      console.log('Service data:', response);
+      if (response.success && response.data) {
+        const { service_name, description, charge_type } = response.data;
+        setFormData({
+          service_name: service_name || '',
+          description: description || '',
+          charge_type: charge_type || 'quantity'
+        });
+      } else {
+        setError('Failed to load service data');
+      }
+    } catch (error) {
+      setError(handleApiError(error));
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchChargeTypes();
+    if (isEditMode) {
+      fetchService();
+    }
+  }, [id, isEditMode, fetchChargeTypes, fetchService]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -119,9 +123,8 @@ const ServiceForm = () => {
 
       if (response.success) {
         setSuccess(true);
-        setTimeout(() => {
-          navigate('/services');
-        }, 1500);
+        // Navigate immediately instead of using setTimeout
+        navigate('/services');
       }
     } catch (error) {
       setError(handleApiError(error));
@@ -134,7 +137,7 @@ const ServiceForm = () => {
     setError(null);
   };
 
-  if (loading && isEditMode) {
+  if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
         <CircularProgress />
