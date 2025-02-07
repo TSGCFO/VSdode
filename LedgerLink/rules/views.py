@@ -11,11 +11,12 @@ from django.db.models import Q
 from django.core.exceptions import ValidationError
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django.utils.translation import gettext_lazy as _  # Add this import
+from django.utils.translation import gettext_lazy as _
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.views import APIView
 
 import json
 import logging
@@ -26,6 +27,73 @@ from .forms import RuleGroupForm, RuleForm, AdvancedRuleForm
 from customer_services.models import CustomerService
 
 logger = logging.getLogger(__name__)
+
+# API Views
+class RuleGroupAPIView(APIView):
+    def get(self, request):
+        """List all rule groups"""
+        try:
+            rule_groups = RuleGroup.objects.select_related(
+                'customer_service',
+                'customer_service__customer',
+                'customer_service__service'
+            ).all()
+            
+            data = [{
+                'id': group.id,
+                'customer_service': group.customer_service_id,
+                'logic_operator': group.logic_operator,
+                'rules': [{
+                    'id': rule.id,
+                    'advancedrule': hasattr(rule, 'advancedrule')
+                } for rule in group.rules.all()]
+            } for group in rule_groups]
+            
+            return Response(data)
+        except Exception as e:
+            logger.error(f"Error fetching rule groups: {str(e)}")
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def post(self, request):
+        """Create a new rule group"""
+        try:
+            customer_service_id = request.data.get('customer_service')
+            logic_operator = request.data.get('logic_operator', 'AND')
+
+            if not customer_service_id:
+                return Response(
+                    {'error': 'Customer service is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if logic_operator not in dict(RuleGroup.LOGIC_CHOICES):
+                return Response(
+                    {'error': 'Invalid logic operator'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            customer_service = get_object_or_404(CustomerService, id=customer_service_id)
+            
+            rule_group = RuleGroup.objects.create(
+                customer_service=customer_service,
+                logic_operator=logic_operator
+            )
+            
+            return Response({
+                'id': rule_group.id,
+                'customer_service': rule_group.customer_service_id,
+                'logic_operator': rule_group.logic_operator,
+                'rules': []
+            }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            logger.error(f"Error creating rule group: {str(e)}")
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 # Rule Group Views
 class RuleGroupListView(LoginRequiredMixin, ListView):
@@ -400,6 +468,7 @@ def validate_rule_value(request):
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
 @api_view(['GET'])
 def get_customer_skus(request, group_id):
     """Return SKUs for a specific rule group's customer"""

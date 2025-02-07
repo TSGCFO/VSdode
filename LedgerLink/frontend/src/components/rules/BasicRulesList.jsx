@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -16,35 +16,42 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon
 } from '@mui/icons-material';
+import rulesService from '../../services/rulesService';
 
 const BasicRulesList = () => {
+  const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Sample data - replace with actual API call
-  const data = React.useMemo(
-    () => [
-      {
-        id: 1,
-        rule_group: 'Service A Rules',
-        field: 'weight_lb',
-        operator: 'gt',
-        value: '50',
-        adjustment_amount: 10.00,
-        created_at: '2024-01-31'
-      },
-      {
-        id: 2,
-        rule_group: 'Service B Rules',
-        field: 'sku_quantity',
-        operator: 'contains',
-        value: 'SKU123;SKU456',
-        adjustment_amount: 5.50,
-        created_at: '2024-01-31'
-      }
-    ],
-    []
-  );
+  // Fetch rules data
+  const fetchRules = useCallback(async () => {
+    try {
+      setError(null);
+      setIsLoading(true);
+      const response = await rulesService.getRules();
+      setData(Array.isArray(response) ? response : []);
+    } catch (err) {
+      setError('Failed to fetch rules');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRules();
+  }, [fetchRules]);
+
+  // Listen for refresh events
+  useEffect(() => {
+    const handleRefresh = () => {
+      fetchRules();
+    };
+    window.addEventListener('refreshRules', handleRefresh);
+    return () => {
+      window.removeEventListener('refreshRules', handleRefresh);
+    };
+  }, [fetchRules]);
 
   const getOperatorLabel = useCallback((operator) => {
     const operatorMap = {
@@ -87,33 +94,37 @@ const BasicRulesList = () => {
 
   const handleEditClick = useCallback(async (row) => {
     try {
+      if (!row.original.id) {
+        throw new Error('Rule ID is required');
+      }
       setError(null);
       setIsLoading(true);
-      // Handle edit rule
-      console.log('Edit rule:', row.original);
-      // TODO: Implement API call
+      await rulesService.updateRule(row.original.id, row.original);
+      await fetchRules(); // Refresh the list
     } catch (err) {
       setError('Failed to edit rule');
       console.error(err);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [fetchRules]);
 
   const handleDeleteClick = useCallback(async (row) => {
     try {
+      if (!row.original.id) {
+        throw new Error('Rule ID is required');
+      }
       setError(null);
       setIsLoading(true);
-      // Handle delete rule
-      console.log('Delete rule:', row.original);
-      // TODO: Implement API call
+      await rulesService.deleteRule(row.original.id);
+      await fetchRules(); // Refresh the list
     } catch (err) {
       setError('Failed to delete rule');
       console.error(err);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [fetchRules]);
 
   const columns = React.useMemo(
     () => [
@@ -148,6 +159,7 @@ const BasicRulesList = () => {
         size: 200,
         Cell: ({ cell, row }) => {
           const value = cell.getValue();
+          if (!value) return '-';
           if (row.original.field === 'sku_quantity') {
             return value.split(';').map((sku, index) => (
               <Chip
@@ -167,7 +179,7 @@ const BasicRulesList = () => {
         size: 120,
         Cell: ({ cell }) => {
           const value = cell.getValue();
-          return `$${parseFloat(value).toFixed(2)}`;
+          return value ? `$${parseFloat(value).toFixed(2)}` : '-';
         },
       },
       {
@@ -188,7 +200,8 @@ const BasicRulesList = () => {
         <Tooltip title="Edit" placement="left">
           <IconButton 
             onClick={() => handleEditClick(row)}
-            aria-label={`Edit rule for ${row.original.rule_group}`}
+            aria-label={`Edit rule for ${row.original.rule_group || 'unnamed group'}`}
+            disabled={isLoading}
           >
             <EditIcon />
           </IconButton>
@@ -197,7 +210,8 @@ const BasicRulesList = () => {
           <IconButton 
             color="error" 
             onClick={() => handleDeleteClick(row)}
-            aria-label={`Delete rule for ${row.original.rule_group}`}
+            aria-label={`Delete rule for ${row.original.rule_group || 'unnamed group'}`}
+            disabled={isLoading}
           >
             <DeleteIcon />
           </IconButton>

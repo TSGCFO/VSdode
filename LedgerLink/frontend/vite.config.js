@@ -9,9 +9,10 @@ export default defineConfig({
     proxy: {
       // Proxy API requests to Django backend
       '/api/v1': {
-        target: 'http://localhost:8000',
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         secure: false,
+        ws: true,
         rewrite: (path) => path
       }
     }

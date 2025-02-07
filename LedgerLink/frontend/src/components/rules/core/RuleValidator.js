@@ -1,13 +1,4 @@
-import { 
-  Rule, 
-  ValidationResult, 
-  ValidationError, 
-  ValidationWarning,
-  FieldType,
-  Operator
-} from '../types';
-
-const FIELD_TYPES: Record<string, FieldType> = {
+const FIELD_TYPES = {
   reference_number: 'string',
   ship_to_name: 'string',
   ship_to_company: 'string',
@@ -24,16 +15,16 @@ const FIELD_TYPES: Record<string, FieldType> = {
   volume_cuft: 'number'
 };
 
-const STRING_OPERATORS: Operator[] = [
+const STRING_OPERATORS = [
   'eq', 'ne', 'in', 'ni', 'contains', 
   'ncontains', 'startswith', 'endswith'
 ];
 
-const NUMBER_OPERATORS: Operator[] = [
+const NUMBER_OPERATORS = [
   'eq', 'ne', 'gt', 'lt', 'ge', 'le'
 ];
 
-const SKU_OPERATORS: Operator[] = [
+const SKU_OPERATORS = [
   'contains', 'ncontains', 'only_contains'
 ];
 
@@ -41,9 +32,9 @@ class RuleValidator {
   /**
    * Validates a complete rule
    */
-  validateRule(rule: Rule): ValidationResult {
-    const errors: ValidationError[] = [];
-    const warnings: ValidationWarning[] = [];
+  validateRule(rule) {
+    const errors = [];
+    const warnings = [];
 
     // Check required fields
     if (!rule.field) {
@@ -120,7 +111,7 @@ class RuleValidator {
   /**
    * Gets valid operators for a field type
    */
-  private getValidOperatorsForType(type: FieldType): Operator[] {
+  getValidOperatorsForType(type) {
     switch (type) {
       case 'string':
         return STRING_OPERATORS;
@@ -136,13 +127,9 @@ class RuleValidator {
   /**
    * Validates the value based on field type and operator
    */
-  private validateValue(
-    value: string,
-    fieldType: FieldType,
-    operator: Operator
-  ): { errors: ValidationError[], warnings: ValidationWarning[] } {
-    const errors: ValidationError[] = [];
-    const warnings: ValidationWarning[] = [];
+  validateValue(value, fieldType, operator) {
+    const errors = [];
+    const warnings = [];
 
     switch (fieldType) {
       case 'number':
@@ -196,7 +183,7 @@ class RuleValidator {
   /**
    * Validates a semicolon-separated list of values
    */
-  validateValueList(value: string): string[] {
+  validateValueList(value) {
     return value
       .split(';')
       .map(v => v.trim())

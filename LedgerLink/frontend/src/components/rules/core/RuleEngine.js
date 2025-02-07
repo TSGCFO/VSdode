@@ -1,10 +1,8 @@
-import { Rule, RuleGroup, RuleResult, ValidationContext } from '../types';
-
-export class RuleEngine {
+class RuleEngine {
   /**
    * Evaluates a single rule against provided context
    */
-  evaluateRule(rule: Rule, context: ValidationContext): RuleResult {
+  evaluateRule(rule, context) {
     try {
       const { field, operator, value } = rule;
       const contextValue = context[field];
@@ -45,7 +43,7 @@ export class RuleEngine {
   /**
    * Evaluates a rule group using its logical operator
    */
-  evaluateGroup(group: RuleGroup, context: ValidationContext): RuleResult {
+  evaluateGroup(group, context) {
     try {
       const results = group.rules.map(rule => this.evaluateRule(rule, context));
 
@@ -91,7 +89,7 @@ export class RuleEngine {
   /**
    * Calculates adjustments based on rule evaluation
    */
-  calculateAdjustments(rule: Rule, baseAmount: number): number {
+  calculateAdjustments(rule, baseAmount) {
     if (!rule.adjustment_amount) return baseAmount;
 
     const amount = Number(rule.adjustment_amount);

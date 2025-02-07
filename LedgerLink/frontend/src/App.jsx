@@ -25,6 +25,8 @@ import {
   Description as DescriptionIcon,
   LocalShipping as LocalShippingIcon,
   Rule as RuleIcon,
+  Category as CategoryIcon,
+  Inventory2 as Inventory2Icon,
 } from '@mui/icons-material';
 
 // Import our components
@@ -48,6 +50,10 @@ import CADShippingForm from './components/shipping/CADShippingForm';
 import USShippingList from './components/shipping/USShippingList';
 import USShippingForm from './components/shipping/USShippingForm';
 import RulesManagement from './components/rules/RulesManagement';
+import MaterialList from './components/materials/MaterialList';
+import MaterialForm from './components/materials/MaterialForm';
+import BoxPriceList from './components/materials/BoxPriceList';
+import BoxPriceForm from './components/materials/BoxPriceForm';
 
 // Create theme
 const theme = createTheme({
@@ -146,6 +152,18 @@ function App() {
                     </ListItemIcon>
                     <ListItemText primary="Products" />
                   </ListItem>
+                  <ListItem button component={Link} to="/materials">
+                    <ListItemIcon>
+                      <CategoryIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="Materials" />
+                  </ListItem>
+                  <ListItem button component={Link} to="/box-prices">
+                    <ListItemIcon>
+                      <Inventory2Icon />
+                    </ListItemIcon>
+                    <ListItemText primary="Box Prices" />
+                  </ListItem>
                   <ListItem button component={Link} to="/inserts">
                     <ListItemIcon>
                       <DescriptionIcon />
@@ -213,6 +231,12 @@ function App() {
                 <Route path="/products" element={<ProtectedRoute><ProductList /></ProtectedRoute>} />
                 <Route path="/products/new" element={<ProtectedRoute><ProductForm /></ProtectedRoute>} />
                 <Route path="/products/:id/edit" element={<ProtectedRoute><ProductForm /></ProtectedRoute>} />
+                <Route path="/materials" element={<ProtectedRoute><MaterialList /></ProtectedRoute>} />
+                <Route path="/materials/new" element={<ProtectedRoute><MaterialForm /></ProtectedRoute>} />
+                <Route path="/materials/:id/edit" element={<ProtectedRoute><MaterialForm /></ProtectedRoute>} />
+                <Route path="/box-prices" element={<ProtectedRoute><BoxPriceList /></ProtectedRoute>} />
+                <Route path="/box-prices/new" element={<ProtectedRoute><BoxPriceForm /></ProtectedRoute>} />
+                <Route path="/box-prices/:id/edit" element={<ProtectedRoute><BoxPriceForm /></ProtectedRoute>} />
                 <Route path="/inserts" element={<ProtectedRoute><InsertList /></ProtectedRoute>} />
                 <Route path="/inserts/new" element={<ProtectedRoute><InsertForm /></ProtectedRoute>} />
                 <Route path="/inserts/:id/edit" element={<ProtectedRoute><InsertForm /></ProtectedRoute>} />

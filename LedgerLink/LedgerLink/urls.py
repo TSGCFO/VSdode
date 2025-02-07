@@ -40,6 +40,7 @@ api_patterns = [
     path('services/', include('services.urls')),
     path('shipping/', include('shipping.urls')),
     path('inserts/', include('inserts.urls')),
+    path('materials/', include('materials.urls')),
 ]
 
 urlpatterns = [

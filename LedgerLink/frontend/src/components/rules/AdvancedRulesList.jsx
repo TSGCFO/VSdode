@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -8,132 +8,125 @@ import {
   IconButton,
   Tooltip,
   Typography,
+  Alert,
+  CircularProgress,
   Chip,
-  Alert
+  Stack
 } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Code as CodeIcon
+  Functions as FunctionsIcon,
+  Rule as RuleIcon
 } from '@mui/icons-material';
+import rulesService from '../../services/rulesService';
 
 const AdvancedRulesList = () => {
+  const [data, setData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Sample data - replace with actual API call
-  const data = useMemo(
-    () => [
-      {
-        id: 1,
-        rule_group: 'Service A Rules',
-        field: 'weight_lb',
-        operator: 'gt',
-        value: '50',
-        adjustment_amount: 10.00,
-        conditions: {
-          'ship_to_country': { 'eq': 'USA' },
-          'carrier': { 'in': ['UPS', 'FedEx'] }
-        },
-        calculations: [
-          { type: 'flat_fee', value: 5.00 },
-          { type: 'percentage', value: 10 }
-        ],
-        created_at: '2024-01-31'
-      },
-      {
-        id: 2,
-        rule_group: 'Service B Rules',
-        field: 'sku_quantity',
-        operator: 'contains',
-        value: 'SKU123;SKU456',
-        adjustment_amount: 5.50,
-        conditions: {
-          'total_item_qty': { 'gt': 10 }
-        },
-        calculations: [
-          { type: 'per_unit', value: 0.50 }
-        ],
-        created_at: '2024-01-31'
+  // Fetch advanced rules data
+  const fetchAdvancedRules = useCallback(async () => {
+    try {
+      setError(null);
+      setIsLoading(true);
+      const response = await rulesService.getAdvancedRules();
+      setData(Array.isArray(response) ? response : []);
+    } catch (err) {
+      setError('Failed to fetch advanced rules');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAdvancedRules();
+  }, [fetchAdvancedRules]);
+
+  // Listen for refresh events
+  useEffect(() => {
+    const handleRefresh = () => {
+      fetchAdvancedRules();
+    };
+    window.addEventListener('refreshRules', handleRefresh);
+    return () => {
+      window.removeEventListener('refreshRules', handleRefresh);
+    };
+  }, [fetchAdvancedRules]);
+
+  const handleEditClick = useCallback(async (row) => {
+    try {
+      if (!row.original.id) {
+        throw new Error('Rule ID is required');
       }
-    ],
-    []
-  );
+      setError(null);
+      setIsLoading(true);
+      await rulesService.updateAdvancedRule(row.original.id, row.original);
+      await fetchAdvancedRules();
+    } catch (err) {
+      setError('Failed to edit advanced rule');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchAdvancedRules]);
 
-  const getOperatorLabel = useCallback((operator) => {
-    const operatorMap = {
-      'gt': 'Greater than',
-      'lt': 'Less than',
-      'eq': 'Equals',
-      'ne': 'Not equals',
-      'ge': 'Greater than or equals',
-      'le': 'Less than or equals',
-      'in': 'In',
-      'ni': 'Not in',
-      'contains': 'Contains',
-      'ncontains': 'Not contains',
-      'only_contains': 'Only Contains',
-      'startswith': 'Starts with',
-      'endswith': 'Ends with'
-    };
-    return operatorMap[operator] || operator;
+  const handleDeleteClick = useCallback(async (row) => {
+    try {
+      if (!row.original.id) {
+        throw new Error('Rule ID is required');
+      }
+      setError(null);
+      setIsLoading(true);
+      await rulesService.deleteAdvancedRule(row.original.id);
+      await fetchAdvancedRules();
+    } catch (err) {
+      setError('Failed to delete advanced rule');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchAdvancedRules]);
+
+  const formatConditions = useCallback((conditions) => {
+    if (!conditions || typeof conditions !== 'object') return '-';
+    return (
+      <Stack direction="row" flexWrap="wrap" gap={0.5}>
+        {Object.entries(conditions).map(([field, condition], index) => (
+          <Chip
+            key={index}
+            icon={<RuleIcon />}
+            label={`${field}: ${condition.operator} ${condition.value}`}
+            size="small"
+            color="primary"
+            variant="outlined"
+          />
+        ))}
+      </Stack>
+    );
   }, []);
 
-  const getFieldLabel = useCallback((field) => {
-    const fieldMap = {
-      'reference_number': 'Reference Number',
-      'ship_to_name': 'Ship To Name',
-      'ship_to_company': 'Ship To Company',
-      'ship_to_city': 'Ship To City',
-      'ship_to_state': 'Ship To State',
-      'ship_to_country': 'Ship To Country',
-      'weight_lb': 'Weight (lb)',
-      'line_items': 'Line Items',
-      'sku_quantity': 'SKU Quantity',
-      'total_item_qty': 'Total Item Quantity',
-      'packages': 'Packages',
-      'notes': 'Notes',
-      'carrier': 'Carrier',
-      'volume_cuft': 'Volume (cuft)'
-    };
-    return fieldMap[field] || field;
+  const formatCalculations = useCallback((calculations) => {
+    if (!Array.isArray(calculations) || calculations.length === 0) return '-';
+    return (
+      <Stack direction="row" flexWrap="wrap" gap={0.5}>
+        {calculations.map((calc, index) => (
+          <Chip
+            key={index}
+            icon={<FunctionsIcon />}
+            label={`${calc.type}: ${calc.value}${calc.type === 'percentage' ? '%' : ''}`}
+            size="small"
+            color="secondary"
+            variant="outlined"
+          />
+        ))}
+      </Stack>
+    );
   }, []);
 
-  const renderConditions = useCallback((conditions) => {
-    return Object.entries(conditions).map(([field, condition]) => {
-      const [operator, value] = Object.entries(condition)[0];
-      return (
-        <Chip
-          key={field}
-          label={`${getFieldLabel(field)} ${getOperatorLabel(operator)} ${value}`}
-          size="small"
-          sx={{ mr: 0.5, mb: 0.5 }}
-        />
-      );
-    });
-  }, [getFieldLabel, getOperatorLabel]);
-
-  const renderCalculations = useCallback((calculations) => {
-    const typeLabels = {
-      'flat_fee': 'Flat Fee',
-      'percentage': 'Percentage',
-      'per_unit': 'Per Unit',
-      'weight_based': 'Weight Based',
-      'volume_based': 'Volume Based',
-      'tiered_percentage': 'Tiered Percentage',
-      'product_specific': 'Product Specific'
-    };
-
-    return calculations.map((calc, index) => (
-      <Chip
-        key={index}
-        label={`${typeLabels[calc.type]}: ${calc.value}`}
-        size="small"
-        sx={{ mr: 0.5, mb: 0.5 }}
-      />
-    ));
-  }, []);
-
-  const columns = useMemo(
+  const columns = React.useMemo(
     () => [
       {
         accessorKey: 'rule_group',
@@ -141,64 +134,16 @@ const AdvancedRulesList = () => {
         size: 200,
       },
       {
-        accessorKey: 'field',
-        header: 'Field',
-        size: 150,
-        Cell: ({ cell }) => (
-          <Tooltip title={getFieldLabel(cell.getValue())}>
-            <span>{cell.getValue()}</span>
-          </Tooltip>
-        ),
-      },
-      {
-        accessorKey: 'operator',
-        header: 'Operator',
-        size: 150,
-        Cell: ({ cell }) => (
-          <Tooltip title={getOperatorLabel(cell.getValue())}>
-            <span>{cell.getValue()}</span>
-          </Tooltip>
-        ),
-      },
-      {
-        accessorKey: 'value',
-        header: 'Value',
-        size: 200,
-        Cell: ({ cell, row }) => {
-          const value = cell.getValue();
-          if (row.original.field === 'sku_quantity') {
-            return value.split(';').map((sku, index) => (
-              <Chip
-                key={index}
-                label={sku}
-                size="small"
-                sx={{ mr: 0.5, mb: 0.5 }}
-              />
-            ));
-          }
-          return value;
-        },
-      },
-      {
         accessorKey: 'conditions',
         header: 'Conditions',
         size: 300,
-        Cell: ({ cell }) => renderConditions(cell.getValue()),
+        Cell: ({ cell }) => formatConditions(cell.getValue()),
       },
       {
         accessorKey: 'calculations',
         header: 'Calculations',
         size: 300,
-        Cell: ({ cell }) => renderCalculations(cell.getValue()),
-      },
-      {
-        accessorKey: 'adjustment_amount',
-        header: 'Base Adjustment',
-        size: 120,
-        Cell: ({ cell }) => {
-          const value = cell.getValue();
-          return `$${parseFloat(value).toFixed(2)}`;
-        },
+        Cell: ({ cell }) => formatCalculations(cell.getValue()),
       },
       {
         accessorKey: 'created_at',
@@ -206,38 +151,8 @@ const AdvancedRulesList = () => {
         size: 150,
       }
     ],
-    [getFieldLabel, getOperatorLabel, renderConditions, renderCalculations]
+    [formatConditions, formatCalculations]
   );
-
-  const handleEditClick = useCallback((row) => {
-    try {
-      // Handle edit advanced rule
-      console.log('Edit advanced rule:', row.original);
-    } catch (err) {
-      setError('Failed to edit rule');
-      console.error(err);
-    }
-  }, []);
-
-  const handleDeleteClick = useCallback((row) => {
-    try {
-      // Handle delete advanced rule
-      console.log('Delete advanced rule:', row.original);
-    } catch (err) {
-      setError('Failed to delete rule');
-      console.error(err);
-    }
-  }, []);
-
-  const handleViewCodeClick = useCallback((row) => {
-    try {
-      // Handle view JSON code
-      console.log('View code for:', row.original);
-    } catch (err) {
-      setError('Failed to view code');
-      console.error(err);
-    }
-  }, []);
 
   const table = useMaterialReactTable({
     columns,
@@ -245,18 +160,22 @@ const AdvancedRulesList = () => {
     enableRowActions: true,
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '1rem' }}>
-        <Tooltip title="View Code">
-          <IconButton onClick={() => handleViewCodeClick(row)}>
-            <CodeIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Edit">
-          <IconButton onClick={() => handleEditClick(row)}>
+        <Tooltip title="Edit" placement="left">
+          <IconButton 
+            onClick={() => handleEditClick(row)}
+            aria-label={`Edit advanced rule for ${row.original.rule_group || 'unnamed group'}`}
+            disabled={isLoading}
+          >
             <EditIcon />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Delete">
-          <IconButton color="error" onClick={() => handleDeleteClick(row)}>
+        <Tooltip title="Delete" placement="right">
+          <IconButton 
+            color="error" 
+            onClick={() => handleDeleteClick(row)}
+            aria-label={`Delete advanced rule for ${row.original.rule_group || 'unnamed group'}`}
+            disabled={isLoading}
+          >
             <DeleteIcon />
           </IconButton>
         </Tooltip>
@@ -272,25 +191,57 @@ const AdvancedRulesList = () => {
       pagination: { pageSize: 10 },
       sorting: [{ id: 'created_at', desc: true }],
     },
-    enableColumnResizing: true,
-    enableFullScreenToggle: false,
-    enableDensityToggle: true,
-    enableColumnFilters: true,
-    enableFilters: true,
-    enableHiding: true,
     state: {
-      isLoading: false,
-      showAlertBanner: false,
-      showProgressBars: false,
+      isLoading,
+      showAlertBanner: !!error,
+      showProgressBars: isLoading,
     },
+    muiToolbarAlertBannerProps: error
+      ? {
+          color: 'error',
+          children: error,
+        }
+      : undefined,
+    renderEmptyRowsFallback: () => (
+      <Typography
+        align="center"
+        sx={{ py: 3 }}
+      >
+        No advanced rules found
+      </Typography>
+    ),
+    positionToolbarAlertBanner: 'top',
   });
 
   return (
     <Box sx={{ position: 'relative' }}>
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+        <Alert 
+          severity="error" 
+          sx={{ mb: 2 }} 
+          onClose={() => setError(null)}
+          role="alert"
+        >
           {error}
         </Alert>
+      )}
+      {isLoading && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(255, 255, 255, 0.7)',
+            zIndex: 1,
+          }}
+        >
+          <CircularProgress />
+        </Box>
       )}
       <MaterialReactTable table={table} />
     </Box>

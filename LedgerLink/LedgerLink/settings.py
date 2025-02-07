@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'inserts.apps.InsertsConfig',
     'customer_services.apps.CustomerServicesConfig',
     'rules',
+    'materials.apps.MaterialsConfig',
 ]
 
 MIDDLEWARE = [

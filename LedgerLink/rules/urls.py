@@ -6,6 +6,9 @@ from . import views
 app_name = 'rules'
 
 urlpatterns = [
+    # API endpoints
+    path('api/groups/', views.RuleGroupAPIView.as_view(), name='api_rule_groups'),
+
     # Rule Group URLs
     path('',
          views.RuleGroupListView.as_view(),
@@ -45,5 +48,4 @@ urlpatterns = [
          views.AdvancedRuleDeleteView.as_view(),
          name='delete_advanced_rule'),
     path('group/<int:group_id>/skus/', views.get_customer_skus, name='get_customer_skus'),
-
 ]
