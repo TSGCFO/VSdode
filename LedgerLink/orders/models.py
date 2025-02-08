@@ -50,3 +50,20 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order {self.transaction_id} for {self.customer}"
+    
+# orders/models.py
+
+class OrderSKUView(models.Model):
+    transaction_id = models.IntegerField()  # Keep transaction_id for linking SKUs to orders
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    reference_number = models.CharField(max_length=100)
+    sku_name = models.CharField(max_length=100)
+    sku_count = models.IntegerField()
+
+    class Meta:
+        managed = False  # This tells Django not to create or modify this table
+        db_table = 'orders_sku_view'  # Name of the view in PostgreSQL
+
+    def __str__(self):
+        return f"Order {self.transaction_id} - {self.sku_name}: {self.sku_count}"
+

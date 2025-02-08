@@ -89,14 +89,16 @@ class Rule(models.Model):
         ('ship_to_city', 'Ship To City'),
         ('ship_to_state', 'Ship To State'),
         ('ship_to_country', 'Ship To Country'),
-        ('weight_lb', 'Weight (lb)'),
-        ('line_items', 'Line Items'),
+        ('sku_count', 'SKU Count'),
+        ('sku_name', 'SKU Name'),
         ('sku_quantity', 'SKU Quantity'),
         ('total_item_qty', 'Total Item Quantity'),
         ('packages', 'Packages'),
         ('notes', 'Notes'),
         ('carrier', 'Carrier'),
         ('volume_cuft', 'Volume (cuft)'),
+        ('weight_lb', 'Weight (lb)'),
+        ('line_items', 'Line Items'),
     ]
 
     OPERATOR_CHOICES = [
@@ -136,12 +138,12 @@ class Rule(models.Model):
 
         # String field validation
         if self.field in ['reference_number', 'ship_to_name', 'ship_to_company', 'ship_to_city',
-                          'ship_to_state', 'ship_to_country', 'carrier', 'notes']:
+                          'ship_to_state', 'ship_to_country', 'carrier', 'sku_name', 'notes']:
             if self.operator in ['gt', 'lt', 'ge', 'le']:
                 raise ValidationError(f"Operator '{self.get_operator_display()}' is not valid for string fields.")
 
         # Numeric field validation
-        elif self.field in ['weight_lb', 'line_items', 'total_item_qty', 'volume_cuft', 'packages']:
+        elif self.field in ['weight_lb', 'line_items', 'total_item_qty', 'volume_cuft', 'sku_count', 'packages']:
             if self.operator in ['contains', 'ncontains', 'startswith', 'endswith', 'only_contains']:
                 raise ValidationError(f"Operator '{self.get_operator_display()}' is not valid for numeric fields.")
             if self.operator in ['gt', 'lt', 'ge', 'le', 'eq', 'ne']:
@@ -306,7 +308,7 @@ class RuleEvaluator:
             values = rule.get_values_as_list()
 
             # Handle numeric fields
-            numeric_fields = ['weight_lb', 'line_items', 'total_item_qty', 'volume_cuft', 'packages']
+            numeric_fields = ['weight_lb', 'line_items', 'total_item_qty', 'volume_cuft', 'packages', 'sku_count']
             if rule.field in numeric_fields:
                 try:
                     field_value = float(field_value) if field_value is not None else 0
@@ -330,8 +332,8 @@ class RuleEvaluator:
 
             # Handle string fields
             string_fields = ['reference_number', 'ship_to_name', 'ship_to_company',
-                             'ship_to_city', 'ship_to_state', 'ship_to_country',
-                             'carrier', 'notes']
+                              'ship_to_city', 'ship_to_state', 'ship_to_country',
+                              'carrier', 'notes', 'sku_name']
             if rule.field in string_fields:
                 field_value = str(field_value) if field_value is not None else ''
 

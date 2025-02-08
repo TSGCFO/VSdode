@@ -76,7 +76,19 @@ class RuleForm(forms.ModelForm):
         operator = cleaned_data.get('operator')
         value = cleaned_data.get('value')
 
-        if field == 'sku_quantity':
+        if field == 'sku_count':
+            # Handle SKU count validation
+            try:
+                float(value)
+            except (ValueError, TypeError):
+                raise ValidationError(_('SKU count must be a number'))
+
+        elif field == 'sku_name':
+            # Handle SKU name validation
+            if operator in ['gt', 'lt', 'ge', 'le']:
+                raise ValidationError(_('Invalid operator for SKU name'))
+
+        elif field == 'sku_quantity':
             # Handle SKU validation
             if operator in ['contains', 'ncontains', 'only_contains']:
                 if not value:
@@ -153,7 +165,19 @@ class AdvancedRuleForm(forms.ModelForm):
         operator = cleaned_data.get('operator')
         value = cleaned_data.get('value')
 
-        if field == 'sku_quantity':
+        if field == 'sku_count':
+            # Handle SKU count validation
+            try:
+                float(value)
+            except (ValueError, TypeError):
+                raise ValidationError(_('SKU count must be a number'))
+
+        elif field == 'sku_name':
+            # Handle SKU name validation
+            if operator in ['gt', 'lt', 'ge', 'le']:
+                raise ValidationError(_('Invalid operator for SKU name'))
+
+        elif field == 'sku_quantity':
             if operator in ['contains', 'ncontains', 'only_contains']:
                 if not value:
                     raise ValidationError(_('At least one SKU must be selected'))

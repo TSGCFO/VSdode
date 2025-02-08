@@ -24,7 +24,7 @@ class RuleInline(admin.TabularInline):
             field = self.cleaned_data.get('field')
             operator = self.cleaned_data.get('operator')
 
-            if field in ['weight_lb', 'line_items', 'total_item_qty', 'volume_cuft', 'packages']:
+            if field in ['weight_lb', 'line_items', 'total_item_qty', 'volume_cuft', 'packages', 'sku_count']:
                 if operator in ['contains', 'ncontains', 'startswith', 'endswith']:
                     raise ValidationError("Invalid operator for numeric field")
             return operator
