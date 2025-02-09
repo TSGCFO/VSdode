@@ -1,4 +1,4 @@
-import { rulesApi, handleApiError } from '../utils/apiClient';
+import { rulesApi, customerServiceApi, handleApiError } from '../utils/apiClient';
 
 const rulesService = {
   // Rule Groups
@@ -189,7 +189,7 @@ const rulesService = {
   getCustomerServices: async () => {
     try {
       const response = await customerServiceApi.list();
-      return response?.data || [];
+      return Array.isArray(response) ? response : [];
     } catch (error) {
       throw handleApiError(error);
     }

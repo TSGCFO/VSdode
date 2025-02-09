@@ -45,6 +45,7 @@ from rest_framework.views import APIView
 @method_decorator([csrf_exempt, ensure_csrf_cookie], name='dispatch')
 class RuleGroupAPIView(APIView):
     permission_classes = [AllowAny]
+    http_method_names = ['get', 'post', 'put', 'delete', 'options']
 
     def dispatch(self, request, *args, **kwargs):
         response = super().dispatch(request, *args, **kwargs)
@@ -52,6 +53,146 @@ class RuleGroupAPIView(APIView):
         response["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
         response["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
         return response
+
+    def options(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_200_OK)
+
+    def get(self, request, *args, **kwargs):
+        try:
+            rule_groups = RuleGroup.objects.select_related(
+                'customer_service',
+                'customer_service__customer',
+                'customer_service__service'
+            ).all()
+            
+            data = [{
+                'id': group.id,
+                'customer_service': {
+                    'id': group.customer_service_id,
+                    'name': str(group.customer_service),
+                    'customer': {
+                        'id': group.customer_service.customer.id,
+                        'name': group.customer_service.customer.company_name
+                    },
+                    'service': {
+                        'id': group.customer_service.service.id,
+                        'name': group.customer_service.service.service_name
+                    }
+                },
+                'logic_operator': group.logic_operator,
+                'rules': [{
+                    'id': rule.id,
+                    'field': rule.field,
+                    'operator': rule.operator,
+                    'value': rule.value,
+                    'adjustment_amount': str(rule.adjustment_amount) if rule.adjustment_amount else None,
+                    'advancedrule': hasattr(rule, 'advancedrule'),
+                    'conditions': rule.advancedrule.conditions if hasattr(rule, 'advancedrule') else None,
+                    'calculations': rule.advancedrule.calculations if hasattr(rule, 'advancedrule') else None,
+                } for rule in group.rules.all()]
+            } for group in rule_groups]
+            
+            return Response(data)
+        except Exception as e:
+            logger.error(f"Error fetching rule groups: {str(e)}")
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def post(self, request, *args, **kwargs):
+        try:
+            customer_service_id = request.data.get('customer_service')
+            logic_operator = request.data.get('logic_operator', 'AND')
+
+            if not customer_service_id:
+                return Response(
+                    {'error': 'Customer service is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if logic_operator not in dict(RuleGroup.LOGIC_CHOICES):
+                return Response(
+                    {'error': 'Invalid logic operator'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            customer_service = get_object_or_404(CustomerService, id=customer_service_id)
+            
+            rule_group = RuleGroup.objects.create(
+                customer_service=customer_service,
+                logic_operator=logic_operator
+            )
+            
+            return Response({
+                'id': rule_group.id,
+                'customer_service': {
+                    'id': rule_group.customer_service_id,
+                    'name': str(rule_group.customer_service),
+                    'customer': {
+                        'id': rule_group.customer_service.customer.id,
+                        'name': rule_group.customer_service.customer.company_name
+                    },
+                    'service': {
+                        'id': rule_group.customer_service.service.id,
+                        'name': rule_group.customer_service.service.service_name
+                    }
+                },
+                'logic_operator': rule_group.logic_operator,
+                'rules': []
+            }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            logger.error(f"Error creating rule group: {str(e)}")
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_rules(request, group_id):
+    """Get all basic rules for a rule group"""
+    try:
+        rule_group = get_object_or_404(RuleGroup, id=group_id)
+        rules = rule_group.rules.filter(advancedrule=None)
+        data = [{
+            'id': rule.id,
+            'field': rule.field,
+            'operator': rule.operator,
+            'value': rule.value,
+            'adjustment_amount': str(rule.adjustment_amount) if rule.adjustment_amount else None,
+        } for rule in rules]
+        return Response(data)
+    except Exception as e:
+        logger.error(f"Error fetching rules: {str(e)}")
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_advanced_rules(request, group_id):
+    """Get all advanced rules for a rule group"""
+    try:
+        rule_group = get_object_or_404(RuleGroup, id=group_id)
+        rules = rule_group.rules.filter(advancedrule__isnull=False)
+        data = [{
+            'id': rule.id,
+            'field': rule.field,
+            'operator': rule.operator,
+            'value': rule.value,
+            'adjustment_amount': str(rule.adjustment_amount) if rule.adjustment_amount else None,
+            'conditions': rule.advancedrule.conditions,
+            'calculations': rule.advancedrule.calculations,
+        } for rule in rules]
+        return Response(data)
+    except Exception as e:
+        logger.error(f"Error fetching advanced rules: {str(e)}")
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
     def get(self, request):
         """List all rule groups"""

@@ -32,9 +32,16 @@ async function request(endpoint, options = {}, useBaseUrl = true) {
     ...options.headers,
   };
 
+  const requestOptions = {
+    ...options,
+    headers,
+    credentials: 'include',
+    mode: 'cors',
+  };
+
   try {
     console.log('Making API request to:', url);
-    const response = await fetch(url, { ...options, headers });
+    const response = await fetch(url, requestOptions);
     console.log('API response status:', response.status);
     
     if (response.status === 401) {
@@ -42,11 +49,14 @@ async function request(endpoint, options = {}, useBaseUrl = true) {
       try {
         const newToken = await refreshAccessToken();
         // Retry the request with new token
-        const newHeaders = {
-          ...headers,
-          'Authorization': `Bearer ${newToken}`,
+        const retryOptions = {
+          ...requestOptions,
+          headers: {
+            ...requestOptions.headers,
+            'Authorization': `Bearer ${newToken}`,
+          },
         };
-        const retryResponse = await fetch(url, { ...options, headers: newHeaders });
+        const retryResponse = await fetch(url, retryOptions);
         const data = await retryResponse.json();
 
         if (!retryResponse.ok) {
@@ -109,52 +119,52 @@ export const rulesApi = {
   }),
 
   // Basic Rules
-  listRules: (groupId) => request(`/rules/group/${groupId}/rules/`, {}, false),
+  listRules: (groupId) => request(`/rules/group/${groupId}/rules/`),
   createRule: (groupId, data) => request(`/rules/group/${groupId}/rule/create/`, {
     method: 'POST',
     body: JSON.stringify(data),
-  }, false),
+  }),
   updateRule: (id, data) => request(`/rules/rule/${id}/edit/`, {
     method: 'PUT',
     body: JSON.stringify(data),
-  }, false),
+  }),
   deleteRule: (id) => request(`/rules/rule/${id}/delete/`, {
     method: 'DELETE',
-  }, false),
+  }),
 
   // Advanced Rules
-  listAdvancedRules: (groupId) => request(`/rules/group/${groupId}/advanced-rules/`, {}, false),
+  listAdvancedRules: (groupId) => request(`/rules/group/${groupId}/advanced-rules/`),
   createAdvancedRule: (groupId, data) => request(`/rules/group/${groupId}/advanced-rule/create/`, {
     method: 'POST',
     body: JSON.stringify(data),
-  }, false),
+  }),
   updateAdvancedRule: (id, data) => request(`/rules/advanced-rule/${id}/edit/`, {
     method: 'PUT',
     body: JSON.stringify(data),
-  }, false),
+  }),
   deleteAdvancedRule: (id) => request(`/rules/advanced-rule/${id}/delete/`, {
     method: 'DELETE',
-  }, false),
+  }),
 
   // Utility Endpoints
-  getOperatorChoices: (field) => request(`/rules/operators/?field=${field}`, {}, false),
+  getOperatorChoices: (field) => request(`/rules/operators/?field=${field}`),
   validateConditions: (conditions) => request('/rules/validate-conditions/', {
     method: 'POST',
     body: JSON.stringify({ conditions }),
-  }, false),
+  }),
   validateCalculations: (calculations) => request('/rules/validate-calculations/', {
     method: 'POST',
     body: JSON.stringify({ calculations }),
-  }, false),
-  getConditionsSchema: () => request('/rules/conditions-schema/', {}, false),
-  getCalculationsSchema: () => request('/rules/calculations-schema/', {}, false),
-  getAvailableFields: () => request('/rules/fields/', {}, false),
-  getCalculationTypes: () => request('/rules/calculation-types/', {}, false),
+  }),
+  getConditionsSchema: () => request('/rules/conditions-schema/'),
+  getCalculationsSchema: () => request('/rules/calculations-schema/'),
+  getAvailableFields: () => request('/rules/fields/'),
+  getCalculationTypes: () => request('/rules/calculation-types/'),
   validateRuleValue: (data) => request('/rules/validate-rule-value/', {
     method: 'POST',
     body: JSON.stringify(data),
-  }, false),
-  getCustomerSkus: (groupId) => request(`/rules/group/${groupId}/skus/`, {}, false),
+  }),
+  getCustomerSkus: (groupId) => request(`/rules/group/${groupId}/skus/`),
 };
 
 /**

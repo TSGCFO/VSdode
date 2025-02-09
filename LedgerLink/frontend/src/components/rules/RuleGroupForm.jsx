@@ -91,7 +91,7 @@ const RuleGroupForm = ({ initialData, onSubmit, onCancel }) => {
               >
                 {customerServices.map((service) => (
                   <MenuItem key={service.id} value={service.id}>
-                    {service.name}
+                    {`${service.customer.company_name} - ${service.service.service_name}`}
                   </MenuItem>
                 ))}
               </Select>
