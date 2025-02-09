@@ -1,249 +1,237 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import {
-  MaterialReactTable,
-  useMaterialReactTable,
-} from 'material-react-table';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
+  Button,
   IconButton,
   Tooltip,
   Typography,
-  Alert,
   CircularProgress,
+  Alert,
   Chip,
-  Stack
 } from '@mui/material';
+import { useMaterialReactTable, MaterialReactTable } from 'material-react-table';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Functions as FunctionsIcon,
-  Rule as RuleIcon
+  Add as AddIcon,
+  Code as CodeIcon,
 } from '@mui/icons-material';
 import rulesService from '../../services/rulesService';
+import AdvancedRuleBuilder from './AdvancedRuleBuilder';
 
-const AdvancedRulesList = () => {
-  const [data, setData] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+const AdvancedRulesList = ({ groupId }) => {
+  const [rules, setRules] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Fetch advanced rules data
-  const fetchAdvancedRules = useCallback(async () => {
-    try {
-      setError(null);
-      setIsLoading(true);
-      const response = await rulesService.getAdvancedRules();
-      setData(Array.isArray(response) ? response : []);
-    } catch (err) {
-      setError('Failed to fetch advanced rules');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const [editingRule, setEditingRule] = useState(null);
+  const [showRuleBuilder, setShowRuleBuilder] = useState(false);
 
   useEffect(() => {
-    fetchAdvancedRules();
-  }, [fetchAdvancedRules]);
-
-  // Listen for refresh events
-  useEffect(() => {
-    const handleRefresh = () => {
-      fetchAdvancedRules();
-    };
-    window.addEventListener('refreshRules', handleRefresh);
-    return () => {
-      window.removeEventListener('refreshRules', handleRefresh);
-    };
-  }, [fetchAdvancedRules]);
-
-  const handleEditClick = useCallback(async (row) => {
-    try {
-      if (!row.original.id) {
-        throw new Error('Rule ID is required');
-      }
-      setError(null);
-      setIsLoading(true);
-      await rulesService.updateAdvancedRule(row.original.id, row.original);
-      await fetchAdvancedRules();
-    } catch (err) {
-      setError('Failed to edit advanced rule');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
+    if (groupId) {
+      fetchRules();
     }
-  }, [fetchAdvancedRules]);
+  }, [groupId]);
 
-  const handleDeleteClick = useCallback(async (row) => {
+  const fetchRules = async () => {
     try {
-      if (!row.original.id) {
-        throw new Error('Rule ID is required');
-      }
+      setLoading(true);
+      const fetchedRules = await rulesService.getAdvancedRules(groupId);
+      setRules(fetchedRules);
       setError(null);
-      setIsLoading(true);
-      await rulesService.deleteAdvancedRule(row.original.id);
-      await fetchAdvancedRules();
     } catch (err) {
-      setError('Failed to delete advanced rule');
-      console.error(err);
+      setError('Failed to fetch advanced rules. Please try again.');
+      console.error('Error fetching advanced rules:', err);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [fetchAdvancedRules]);
+  };
 
-  const formatConditions = useCallback((conditions) => {
-    if (!conditions || typeof conditions !== 'object') return '-';
+  const handleCreateRule = async (ruleData) => {
+    try {
+      await rulesService.createAdvancedRule(groupId, ruleData);
+      await fetchRules();
+      setShowRuleBuilder(false);
+    } catch (err) {
+      setError('Failed to create advanced rule. Please try again.');
+      console.error('Error creating advanced rule:', err);
+    }
+  };
+
+  const handleUpdateRule = async (id, ruleData) => {
+    try {
+      await rulesService.updateAdvancedRule(id, ruleData);
+      await fetchRules();
+      setEditingRule(null);
+    } catch (err) {
+      setError('Failed to update advanced rule. Please try again.');
+      console.error('Error updating advanced rule:', err);
+    }
+  };
+
+  const handleDeleteRule = async (id) => {
+    try {
+      await rulesService.deleteAdvancedRule(id);
+      await fetchRules();
+    } catch (err) {
+      setError('Failed to delete advanced rule. Please try again.');
+      console.error('Error deleting advanced rule:', err);
+    }
+  };
+
+  const formatConditions = (conditions) => {
+    if (!conditions || Object.keys(conditions).length === 0) {
+      return 'No conditions';
+    }
+    return Object.entries(conditions).map(([field, criteria]) => (
+      <Chip
+        key={field}
+        label={`${field}: ${Object.entries(criteria).map(([op, val]) => `${op}=${val}`).join(', ')}`}
+        size="small"
+        sx={{ m: 0.5 }}
+      />
+    ));
+  };
+
+  const formatCalculations = (calculations) => {
+    if (!calculations || calculations.length === 0) {
+      return 'No calculations';
+    }
+    return calculations.map((calc, index) => (
+      <Chip
+        key={index}
+        label={`${calc.type}: ${calc.value}`}
+        size="small"
+        sx={{ m: 0.5 }}
+      />
+    ));
+  };
+
+  const columns = [
+    {
+      accessorKey: 'field',
+      header: 'Field',
+      Cell: ({ row }) => {
+        const fieldMap = Object.fromEntries(
+          row.original.FIELD_CHOICES?.map(([value, label]) => [value, label]) || []
+        );
+        return <Typography>{fieldMap[row.original.field] || row.original.field}</Typography>;
+      },
+    },
+    {
+      accessorKey: 'operator',
+      header: 'Operator',
+      Cell: ({ row }) => {
+        const operatorMap = Object.fromEntries(
+          row.original.OPERATOR_CHOICES?.map(([value, label]) => [value, label]) || []
+        );
+        return <Typography>{operatorMap[row.original.operator] || row.original.operator}</Typography>;
+      },
+    },
+    {
+      accessorKey: 'value',
+      header: 'Value',
+    },
+    {
+      accessorKey: 'conditions',
+      header: 'Conditions',
+      Cell: ({ row }) => (
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+          {formatConditions(row.original.conditions)}
+        </Box>
+      ),
+    },
+    {
+      accessorKey: 'calculations',
+      header: 'Calculations',
+      Cell: ({ row }) => (
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+          {formatCalculations(row.original.calculations)}
+        </Box>
+      ),
+    },
+  ];
+
+  if (loading) {
     return (
-      <Stack direction="row" flexWrap="wrap" gap={0.5}>
-        {Object.entries(conditions).map(([field, condition], index) => (
-          <Chip
-            key={index}
-            icon={<RuleIcon />}
-            label={`${field}: ${condition.operator} ${condition.value}`}
-            size="small"
-            color="primary"
-            variant="outlined"
-          />
-        ))}
-      </Stack>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
     );
-  }, []);
-
-  const formatCalculations = useCallback((calculations) => {
-    if (!Array.isArray(calculations) || calculations.length === 0) return '-';
-    return (
-      <Stack direction="row" flexWrap="wrap" gap={0.5}>
-        {calculations.map((calc, index) => (
-          <Chip
-            key={index}
-            icon={<FunctionsIcon />}
-            label={`${calc.type}: ${calc.value}${calc.type === 'percentage' ? '%' : ''}`}
-            size="small"
-            color="secondary"
-            variant="outlined"
-          />
-        ))}
-      </Stack>
-    );
-  }, []);
-
-  const columns = React.useMemo(
-    () => [
-      {
-        accessorKey: 'rule_group',
-        header: 'Rule Group',
-        size: 200,
-      },
-      {
-        accessorKey: 'conditions',
-        header: 'Conditions',
-        size: 300,
-        Cell: ({ cell }) => formatConditions(cell.getValue()),
-      },
-      {
-        accessorKey: 'calculations',
-        header: 'Calculations',
-        size: 300,
-        Cell: ({ cell }) => formatCalculations(cell.getValue()),
-      },
-      {
-        accessorKey: 'created_at',
-        header: 'Created',
-        size: 150,
-      }
-    ],
-    [formatConditions, formatCalculations]
-  );
+  }
 
   const table = useMaterialReactTable({
     columns,
-    data,
+    data: rules,
     enableRowActions: true,
+    positionActionsColumn: 'last',
+    muiTableContainerProps: { sx: { maxHeight: '500px' } },
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '1rem' }}>
-        <Tooltip title="Edit" placement="left">
-          <IconButton 
-            onClick={() => handleEditClick(row)}
-            aria-label={`Edit advanced rule for ${row.original.rule_group || 'unnamed group'}`}
-            disabled={isLoading}
-          >
+        <Tooltip title="Edit">
+          <IconButton onClick={() => setEditingRule(row.original)}>
             <EditIcon />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Delete" placement="right">
-          <IconButton 
-            color="error" 
-            onClick={() => handleDeleteClick(row)}
-            aria-label={`Delete advanced rule for ${row.original.rule_group || 'unnamed group'}`}
-            disabled={isLoading}
+        <Tooltip title="Delete">
+          <IconButton
+            color="error"
+            onClick={() => handleDeleteRule(row.original.id)}
           >
             <DeleteIcon />
           </IconButton>
         </Tooltip>
+        <Tooltip title="View JSON">
+          <IconButton
+            onClick={() => {
+              console.log('Advanced Rule Details:', {
+                conditions: row.original.conditions,
+                calculations: row.original.calculations
+              });
+            }}
+          >
+            <CodeIcon />
+          </IconButton>
+        </Tooltip>
       </Box>
     ),
-    renderTopToolbarCustomActions: () => (
-      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-        <Typography variant="h6">Advanced Rules</Typography>
-      </Box>
-    ),
-    muiTableBodyRowProps: { hover: true },
     initialState: {
+      sorting: [{ id: 'field', desc: false }],
       pagination: { pageSize: 10 },
-      sorting: [{ id: 'created_at', desc: true }],
     },
-    state: {
-      isLoading,
-      showAlertBanner: !!error,
-      showProgressBars: isLoading,
-    },
-    muiToolbarAlertBannerProps: error
-      ? {
-          color: 'error',
-          children: error,
-        }
-      : undefined,
-    renderEmptyRowsFallback: () => (
-      <Typography
-        align="center"
-        sx={{ py: 3 }}
-      >
-        No advanced rules found
-      </Typography>
-    ),
-    positionToolbarAlertBanner: 'top',
   });
 
   return (
-    <Box sx={{ position: 'relative' }}>
+    <Box>
       {error && (
-        <Alert 
-          severity="error" 
-          sx={{ mb: 2 }} 
-          onClose={() => setError(null)}
-          role="alert"
-        >
+        <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
-      {isLoading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'rgba(255, 255, 255, 0.7)',
-            zIndex: 1,
-          }}
+
+      <Box mb={2} display="flex" justifyContent="flex-end">
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<AddIcon />}
+          onClick={() => setShowRuleBuilder(true)}
         >
-          <CircularProgress />
-        </Box>
-      )}
+          Create Advanced Rule
+        </Button>
+      </Box>
+
       <MaterialReactTable table={table} />
+
+      {(showRuleBuilder || editingRule) && (
+        <AdvancedRuleBuilder
+          groupId={groupId}
+          initialData={editingRule}
+          onSubmit={editingRule ? handleUpdateRule : handleCreateRule}
+          onCancel={() => {
+            setShowRuleBuilder(false);
+            setEditingRule(null);
+          }}
+        />
+      )}
     </Box>
   );
 };

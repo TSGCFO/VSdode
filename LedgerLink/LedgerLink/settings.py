@@ -149,12 +149,16 @@ REST_FRAMEWORK = {
 
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5175",  # Vite dev server
+    "http://localhost:5176",  # Vite dev server
+    "http://127.0.0.1:5176",
+    "http://localhost:5175",
     "http://127.0.0.1:5175",
 ]
 
 # CSRF settings - Updated for development
 CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:5176',
+    'http://127.0.0.1:5176',
     'http://localhost:5175',
     'http://127.0.0.1:5175',
 ]

@@ -41,11 +41,11 @@ api_patterns = [
     path('shipping/', include('shipping.urls')),
     path('inserts/', include('inserts.urls')),
     path('materials/', include('materials.urls')),
+    path('rules/', include('rules.urls')),  # Add rules to API patterns
 ]
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('rules/', include('rules.urls')),
     path('billing/', include('billing.urls')),
     
     # API endpoints

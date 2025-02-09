@@ -1,207 +1,214 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
-  Typography,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
   InputLabel,
-  Select,
   MenuItem,
+  Select,
   TextField,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
-import RuleValidator from './core/RuleValidator';
-import {
-  FIELD_OPTIONS,
-  STRING_OPERATORS,
-  NUMBER_OPERATORS,
-  SKU_OPERATORS,
-} from './constants';
+import rulesService from '../../services/rulesService';
 
-const RuleBuilder = ({ initialRule, onSave, onClose }) => {
-  const [currentRule, setCurrentRule] = useState(
-    initialRule || {
-      field: '',
-      operator: 'eq',
-      value: '',
-    }
-  );
-
-  const [validation, setValidation] = useState({
-    isValid: true,
-    errors: [],
-    warnings: [],
+const RuleBuilder = ({ groupId, initialData, onSubmit, onCancel }) => {
+  const [formData, setFormData] = useState({
+    field: '',
+    operator: '',
+    value: '',
+    adjustment_amount: '',
+    ...initialData,
   });
+  const [fields, setFields] = useState([]);
+  const [operators, setOperators] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const getOperatorsForField = useCallback((fieldName) => {
-    const field = FIELD_OPTIONS.find(f => f.value === fieldName);
-    if (!field) return [];
-
-    switch (field.type) {
-      case 'string':
-        return STRING_OPERATORS;
-      case 'number':
-        return NUMBER_OPERATORS;
-      case 'sku':
-        return SKU_OPERATORS;
-      default:
-        return [];
-    }
+  useEffect(() => {
+    fetchFields();
   }, []);
 
-  const handleFieldChange = (event) => {
-    const fieldName = event.target.value;
-    const operators = getOperatorsForField(fieldName);
-    
-    setCurrentRule(prev => ({
-      ...prev,
-      field: fieldName,
-      operator: operators[0]?.value || 'eq',
-      value: '',
-    }));
+  useEffect(() => {
+    if (formData.field) {
+      fetchOperators(formData.field);
+    }
+  }, [formData.field]);
 
-    validateRule({
-      ...currentRule,
-      field: fieldName,
-    });
-  };
-
-  const handleOperatorChange = (event) => {
-    const operator = event.target.value;
-    setCurrentRule(prev => ({
-      ...prev,
-      operator,
-    }));
-
-    validateRule({
-      ...currentRule,
-      operator,
-    });
-  };
-
-  const handleValueChange = (event) => {
-    const value = event.target.value;
-    setCurrentRule(prev => ({
-      ...prev,
-      value,
-    }));
-
-    validateRule({
-      ...currentRule,
-      value,
-    });
-  };
-
-  const validateRule = (rule) => {
-    const result = RuleValidator.validateRule(rule);
-    setValidation(result);
-    return result.isValid;
-  };
-
-  const handleSave = () => {
-    if (validateRule(currentRule)) {
-      onSave(currentRule);
+  const fetchFields = async () => {
+    try {
+      setLoading(true);
+      const availableFields = await rulesService.getAvailableFields();
+      setFields(availableFields);
+    } catch (err) {
+      setError('Failed to fetch fields. Please try again.');
+      console.error('Error fetching fields:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getValueHelperText = () => {
-    const field = FIELD_OPTIONS.find(f => f.value === currentRule.field);
-    if (!field) return '';
-
-    switch (field.type) {
-      case 'number':
-        return currentRule.operator === 'in' || currentRule.operator === 'ni'
-          ? 'Enter numbers separated by semicolons (e.g., 1;2;3)'
-          : 'Enter a number';
-      case 'sku':
-        return 'Enter SKUs separated by semicolons';
-      case 'string':
-        return currentRule.operator === 'in' || currentRule.operator === 'ni'
-          ? 'Enter values separated by semicolons'
-          : '';
-      default:
-        return '';
+  const fetchOperators = async (field) => {
+    try {
+      const availableOperators = await rulesService.getOperatorChoices(field);
+      setOperators(availableOperators);
+      // Reset operator if current one is not valid for new field
+      if (!availableOperators.find(op => op.value === formData.operator)) {
+        setFormData(prev => ({ ...prev, operator: '' }));
+      }
+    } catch (err) {
+      console.error('Error fetching operators:', err);
     }
   };
+
+  const handleChange = async (event) => {
+    const { name, value } = event.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+
+    if (name === 'value') {
+      try {
+        await rulesService.validateRuleValue({
+          field: formData.field,
+          operator: formData.operator,
+          value
+        });
+        setError(null);
+      } catch (err) {
+        setError('Invalid value format for selected field and operator.');
+      }
+    }
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    try {
+      setLoading(true);
+      if (initialData) {
+        await onSubmit(initialData.id, formData);
+      } else {
+        await onSubmit(formData);
+      }
+      setError(null);
+    } catch (err) {
+      setError('Failed to save rule. Please check your inputs and try again.');
+      console.error('Error saving rule:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isNumericField = (field) => {
+    const numericFields = [
+      'weight_lb',
+      'line_items',
+      'total_item_qty',
+      'volume_cuft',
+      'sku_count',
+      'packages'
+    ];
+    return numericFields.includes(field);
+  };
+
+  if (loading && !formData.field) {
+    return (
+      <Dialog open fullWidth maxWidth="sm">
+        <DialogContent>
+          <Box display="flex" justifyContent="center" p={2}>
+            <CircularProgress />
+          </Box>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        {initialRule ? 'Edit Rule' : 'Create Rule'}
-      </Typography>
+    <Dialog open onClose={onCancel} fullWidth maxWidth="sm">
+      <DialogTitle>
+        {initialData ? 'Edit Rule' : 'Create Rule'}
+      </DialogTitle>
+      <form onSubmit={handleSubmit}>
+        <DialogContent>
+          <Box display="flex" flexDirection="column" gap={2}>
+            {error && (
+              <Alert severity="error">
+                {error}
+              </Alert>
+            )}
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <FormControl fullWidth>
-          <InputLabel>Field</InputLabel>
-          <Select
-            value={currentRule.field}
-            onChange={handleFieldChange}
-            label="Field"
-          >
-            {FIELD_OPTIONS.map(option => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+            <FormControl fullWidth required>
+              <InputLabel>Field</InputLabel>
+              <Select
+                name="field"
+                value={formData.field}
+                onChange={handleChange}
+                label="Field"
+              >
+                {fields.map((field) => (
+                  <MenuItem key={field.value} value={field.value}>
+                    {field.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-        <FormControl fullWidth>
-          <InputLabel>Operator</InputLabel>
-          <Select
-            value={currentRule.operator}
-            onChange={handleOperatorChange}
-            label="Operator"
-            disabled={!currentRule.field}
-          >
-            {getOperatorsForField(currentRule.field).map(option => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+            <FormControl fullWidth required disabled={!formData.field}>
+              <InputLabel>Operator</InputLabel>
+              <Select
+                name="operator"
+                value={formData.operator}
+                onChange={handleChange}
+                label="Operator"
+              >
+                {operators.map((operator) => (
+                  <MenuItem key={operator.value} value={operator.value}>
+                    {operator.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-        <TextField
-          fullWidth
-          label="Value"
-          value={currentRule.value}
-          onChange={handleValueChange}
-          error={validation.errors.some(e => e.field === 'value')}
-          helperText={
-            validation.errors.find(e => e.field === 'value')?.message ||
-            validation.warnings.find(w => w.field === 'value')?.message ||
-            getValueHelperText()
-          }
-          disabled={!currentRule.field || !currentRule.operator}
-        />
+            <TextField
+              fullWidth
+              required
+              label="Value"
+              name="value"
+              value={formData.value}
+              onChange={handleChange}
+              disabled={!formData.operator}
+              type={isNumericField(formData.field) ? 'number' : 'text'}
+              helperText={formData.field === 'sku_quantity' ? 
+                'For multiple values, separate with semicolon (;)' : ''}
+            />
 
-        {currentRule.adjustment_amount !== undefined && (
-          <TextField
-            fullWidth
-            label="Adjustment Amount"
-            type="number"
-            value={currentRule.adjustment_amount}
-            onChange={(e) => setCurrentRule(prev => ({
-              ...prev,
-              adjustment_amount: parseFloat(e.target.value)
-            }))}
-            error={validation.errors.some(e => e.field === 'adjustment_amount')}
-            helperText={validation.errors.find(e => e.field === 'adjustment_amount')?.message}
-          />
-        )}
-
-        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 2 }}>
-          <Button onClick={onClose}>Cancel</Button>
+            <TextField
+              fullWidth
+              label="Adjustment Amount"
+              name="adjustment_amount"
+              value={formData.adjustment_amount}
+              onChange={handleChange}
+              type="number"
+              inputProps={{ step: '0.01' }}
+              helperText="Optional: Amount to adjust the price"
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onCancel}>Cancel</Button>
           <Button
+            type="submit"
             variant="contained"
-            onClick={handleSave}
-            disabled={!validation.isValid}
+            color="primary"
+            disabled={loading || !formData.field || !formData.operator || !formData.value}
           >
-            {initialRule ? 'Update' : 'Create'}
+            {loading ? <CircularProgress size={24} /> : (initialData ? 'Update' : 'Create')}
           </Button>
-        </Box>
-      </Box>
-    </Box>
+        </DialogActions>
+      </form>
+    </Dialog>
   );
 };
 

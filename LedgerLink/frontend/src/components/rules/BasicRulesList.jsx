@@ -1,286 +1,186 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import {
-  MaterialReactTable,
-  useMaterialReactTable,
-} from 'material-react-table';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
+  Button,
   IconButton,
   Tooltip,
   Typography,
-  Chip,
+  CircularProgress,
   Alert,
-  CircularProgress
 } from '@mui/material';
+import { useMaterialReactTable, MaterialReactTable } from 'material-react-table';
 import {
   Edit as EditIcon,
-  Delete as DeleteIcon
+  Delete as DeleteIcon,
+  Add as AddIcon,
 } from '@mui/icons-material';
 import rulesService from '../../services/rulesService';
+import RuleBuilder from './RuleBuilder';
 
-const BasicRulesList = () => {
-  const [data, setData] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+const BasicRulesList = ({ groupId }) => {
+  const [rules, setRules] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Fetch rules data
-  const fetchRules = useCallback(async () => {
-    try {
-      setError(null);
-      setIsLoading(true);
-      const response = await rulesService.getRules();
-      setData(Array.isArray(response) ? response : []);
-    } catch (err) {
-      setError('Failed to fetch rules');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const [editingRule, setEditingRule] = useState(null);
+  const [showRuleBuilder, setShowRuleBuilder] = useState(false);
 
   useEffect(() => {
-    fetchRules();
-  }, [fetchRules]);
-
-  // Listen for refresh events
-  useEffect(() => {
-    const handleRefresh = () => {
+    if (groupId) {
       fetchRules();
-    };
-    window.addEventListener('refreshRules', handleRefresh);
-    return () => {
-      window.removeEventListener('refreshRules', handleRefresh);
-    };
-  }, [fetchRules]);
-
-  const getOperatorLabel = useCallback((operator) => {
-    const operatorMap = {
-      'gt': 'Greater than',
-      'lt': 'Less than',
-      'eq': 'Equals',
-      'ne': 'Not equals',
-      'ge': 'Greater than or equals',
-      'le': 'Less than or equals',
-      'in': 'In',
-      'ni': 'Not in',
-      'contains': 'Contains',
-      'ncontains': 'Not contains',
-      'only_contains': 'Only Contains',
-      'startswith': 'Starts with',
-      'endswith': 'Ends with'
-    };
-    return operatorMap[operator] || operator;
-  }, []);
-
-  const getFieldLabel = useCallback((field) => {
-    const fieldMap = {
-      'reference_number': 'Reference Number',
-      'ship_to_name': 'Ship To Name',
-      'ship_to_company': 'Ship To Company',
-      'ship_to_city': 'Ship To City',
-      'ship_to_state': 'Ship To State',
-      'ship_to_country': 'Ship To Country',
-      'weight_lb': 'Weight (lb)',
-      'line_items': 'Line Items',
-      'sku_quantity': 'SKU Quantity',
-      'total_item_qty': 'Total Item Quantity',
-      'packages': 'Packages',
-      'notes': 'Notes',
-      'carrier': 'Carrier',
-      'volume_cuft': 'Volume (cuft)'
-    };
-    return fieldMap[field] || field;
-  }, []);
-
-  const handleEditClick = useCallback(async (row) => {
-    try {
-      if (!row.original.id) {
-        throw new Error('Rule ID is required');
-      }
-      setError(null);
-      setIsLoading(true);
-      await rulesService.updateRule(row.original.id, row.original);
-      await fetchRules(); // Refresh the list
-    } catch (err) {
-      setError('Failed to edit rule');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
     }
-  }, [fetchRules]);
+  }, [groupId]);
 
-  const handleDeleteClick = useCallback(async (row) => {
+  const fetchRules = async () => {
     try {
-      if (!row.original.id) {
-        throw new Error('Rule ID is required');
-      }
+      setLoading(true);
+      const fetchedRules = await rulesService.getRules(groupId);
+      setRules(fetchedRules);
       setError(null);
-      setIsLoading(true);
-      await rulesService.deleteRule(row.original.id);
-      await fetchRules(); // Refresh the list
     } catch (err) {
-      setError('Failed to delete rule');
-      console.error(err);
+      setError('Failed to fetch rules. Please try again.');
+      console.error('Error fetching rules:', err);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [fetchRules]);
+  };
 
-  const columns = React.useMemo(
-    () => [
-      {
-        accessorKey: 'rule_group',
-        header: 'Rule Group',
-        size: 200,
+  const handleCreateRule = async (ruleData) => {
+    try {
+      await rulesService.createRule(groupId, ruleData);
+      await fetchRules();
+      setShowRuleBuilder(false);
+    } catch (err) {
+      setError('Failed to create rule. Please try again.');
+      console.error('Error creating rule:', err);
+    }
+  };
+
+  const handleUpdateRule = async (id, ruleData) => {
+    try {
+      await rulesService.updateRule(id, ruleData);
+      await fetchRules();
+      setEditingRule(null);
+    } catch (err) {
+      setError('Failed to update rule. Please try again.');
+      console.error('Error updating rule:', err);
+    }
+  };
+
+  const handleDeleteRule = async (id) => {
+    try {
+      await rulesService.deleteRule(id);
+      await fetchRules();
+    } catch (err) {
+      setError('Failed to delete rule. Please try again.');
+      console.error('Error deleting rule:', err);
+    }
+  };
+
+  const columns = [
+    {
+      accessorKey: 'field',
+      header: 'Field',
+      Cell: ({ row }) => {
+        const fieldMap = Object.fromEntries(
+          row.original.FIELD_CHOICES?.map(([value, label]) => [value, label]) || []
+        );
+        return <Typography>{fieldMap[row.original.field] || row.original.field}</Typography>;
       },
-      {
-        accessorKey: 'field',
-        header: 'Field',
-        size: 150,
-        Cell: ({ cell }) => (
-          <Tooltip title={getFieldLabel(cell.getValue())} placement="top">
-            <span>{cell.getValue()}</span>
-          </Tooltip>
-        ),
+    },
+    {
+      accessorKey: 'operator',
+      header: 'Operator',
+      Cell: ({ row }) => {
+        const operatorMap = Object.fromEntries(
+          row.original.OPERATOR_CHOICES?.map(([value, label]) => [value, label]) || []
+        );
+        return <Typography>{operatorMap[row.original.operator] || row.original.operator}</Typography>;
       },
-      {
-        accessorKey: 'operator',
-        header: 'Operator',
-        size: 150,
-        Cell: ({ cell }) => (
-          <Tooltip title={getOperatorLabel(cell.getValue())} placement="top">
-            <span>{cell.getValue()}</span>
-          </Tooltip>
-        ),
-      },
-      {
-        accessorKey: 'value',
-        header: 'Value',
-        size: 200,
-        Cell: ({ cell, row }) => {
-          const value = cell.getValue();
-          if (!value) return '-';
-          if (row.original.field === 'sku_quantity') {
-            return value.split(';').map((sku, index) => (
-              <Chip
-                key={index}
-                label={sku}
-                size="small"
-                sx={{ mr: 0.5, mb: 0.5 }}
-              />
-            ));
-          }
-          return value;
-        },
-      },
-      {
-        accessorKey: 'adjustment_amount',
-        header: 'Adjustment',
-        size: 120,
-        Cell: ({ cell }) => {
-          const value = cell.getValue();
-          return value ? `$${parseFloat(value).toFixed(2)}` : '-';
-        },
-      },
-      {
-        accessorKey: 'created_at',
-        header: 'Created',
-        size: 150,
-      }
-    ],
-    [getFieldLabel, getOperatorLabel]
-  );
+    },
+    {
+      accessorKey: 'value',
+      header: 'Value',
+    },
+    {
+      accessorKey: 'adjustment_amount',
+      header: 'Adjustment Amount',
+      Cell: ({ row }) => (
+        <Typography>
+          {row.original.adjustment_amount ? `$${row.original.adjustment_amount}` : 'N/A'}
+        </Typography>
+      ),
+    },
+  ];
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   const table = useMaterialReactTable({
     columns,
-    data,
+    data: rules,
     enableRowActions: true,
+    positionActionsColumn: 'last',
+    muiTableContainerProps: { sx: { maxHeight: '500px' } },
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '1rem' }}>
-        <Tooltip title="Edit" placement="left">
-          <IconButton 
-            onClick={() => handleEditClick(row)}
-            aria-label={`Edit rule for ${row.original.rule_group || 'unnamed group'}`}
-            disabled={isLoading}
-          >
+        <Tooltip title="Edit">
+          <IconButton onClick={() => setEditingRule(row.original)}>
             <EditIcon />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Delete" placement="right">
-          <IconButton 
-            color="error" 
-            onClick={() => handleDeleteClick(row)}
-            aria-label={`Delete rule for ${row.original.rule_group || 'unnamed group'}`}
-            disabled={isLoading}
+        <Tooltip title="Delete">
+          <IconButton
+            color="error"
+            onClick={() => handleDeleteRule(row.original.id)}
           >
             <DeleteIcon />
           </IconButton>
         </Tooltip>
       </Box>
     ),
-    renderTopToolbarCustomActions: () => (
-      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-        <Typography variant="h6">Basic Rules</Typography>
-      </Box>
-    ),
-    muiTableBodyRowProps: { hover: true },
     initialState: {
+      sorting: [{ id: 'field', desc: false }],
       pagination: { pageSize: 10 },
-      sorting: [{ id: 'created_at', desc: true }],
     },
-    state: {
-      isLoading,
-      showAlertBanner: !!error,
-      showProgressBars: isLoading,
-    },
-    muiToolbarAlertBannerProps: error
-      ? {
-          color: 'error',
-          children: error,
-        }
-      : undefined,
-    renderEmptyRowsFallback: () => (
-      <Typography
-        align="center"
-        sx={{ py: 3 }}
-      >
-        No rules found
-      </Typography>
-    ),
-    positionToolbarAlertBanner: 'top',
   });
 
   return (
-    <Box sx={{ position: 'relative' }}>
+    <Box>
       {error && (
-        <Alert 
-          severity="error" 
-          sx={{ mb: 2 }} 
-          onClose={() => setError(null)}
-          role="alert"
-        >
+        <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
-      {isLoading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'rgba(255, 255, 255, 0.7)',
-            zIndex: 1,
-          }}
+
+      <Box mb={2} display="flex" justifyContent="flex-end">
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<AddIcon />}
+          onClick={() => setShowRuleBuilder(true)}
         >
-          <CircularProgress />
-        </Box>
-      )}
+          Create Rule
+        </Button>
+      </Box>
+
       <MaterialReactTable table={table} />
+
+      {(showRuleBuilder || editingRule) && (
+        <RuleBuilder
+          groupId={groupId}
+          initialData={editingRule}
+          onSubmit={editingRule ? handleUpdateRule : handleCreateRule}
+          onCancel={() => {
+            setShowRuleBuilder(false);
+            setEditingRule(null);
+          }}
+        />
+      )}
     </Box>
   );
 };

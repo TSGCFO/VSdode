@@ -1,150 +1,197 @@
-import axios from 'axios';
-
-const RULES_BASE_URL = '/rules';
-const API_BASE_URL = '/api/v1';
+import { rulesApi, handleApiError } from '../utils/apiClient';
 
 const rulesService = {
   // Rule Groups
   getRuleGroups: async () => {
     try {
-      const response = await axios.get(`${RULES_BASE_URL}/api/groups/`);
-      return Array.isArray(response.data) ? response.data : [];
+      console.log('Fetching rule groups...');
+      const data = await rulesApi.listGroups();
+      console.log('Rule groups data:', data);
+      return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error('Error fetching rule groups:', error);
-      return [];
+      throw handleApiError(error);
     }
   },
 
   getRuleGroup: async (id) => {
-    if (!id) throw new Error('Rule group ID is required');
-    const response = await axios.get(`${RULES_BASE_URL}/group/${id}/`);
-    return response.data;
+    try {
+      return await rulesApi.getGroup(id);
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   createRuleGroup: async (data) => {
-    const response = await axios.post(`${RULES_BASE_URL}/api/groups/`, data);
-    return response.data;
+    try {
+      return await rulesApi.createGroup(data);
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   updateRuleGroup: async (id, data) => {
-    if (!id) throw new Error('Rule group ID is required');
-    const response = await axios.put(`${RULES_BASE_URL}/group/${id}/edit/`, data);
-    return response.data;
+    try {
+      return await rulesApi.updateGroup(id, data);
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   deleteRuleGroup: async (id) => {
-    if (!id) throw new Error('Rule group ID is required');
-    await axios.delete(`${RULES_BASE_URL}/group/${id}/delete/`);
+    try {
+      await rulesApi.deleteGroup(id);
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   // Basic Rules
   getRules: async (groupId) => {
-    const response = await axios.get(RULES_BASE_URL, {
-      params: { group_id: groupId }
-    });
-    return response.data;
+    try {
+      return await rulesApi.listRules(groupId);
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   createRule: async (groupId, data) => {
-    if (!groupId) throw new Error('Group ID is required');
-    const response = await axios.post(`${RULES_BASE_URL}/group/${groupId}/rule/create/`, data);
-    return response.data;
+    try {
+      return await rulesApi.createRule(groupId, data);
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   updateRule: async (id, data) => {
-    if (!id) throw new Error('Rule ID is required');
-    const response = await axios.put(`${RULES_BASE_URL}/rule/${id}/edit/`, data);
-    return response.data;
+    try {
+      return await rulesApi.updateRule(id, data);
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   deleteRule: async (id) => {
-    if (!id) throw new Error('Rule ID is required');
-    await axios.delete(`${RULES_BASE_URL}/rule/${id}/delete/`);
+    try {
+      await rulesApi.deleteRule(id);
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   // Advanced Rules
   getAdvancedRules: async (groupId) => {
-    const response = await axios.get(RULES_BASE_URL, {
-      params: { group_id: groupId, type: 'advanced' }
-    });
-    return response.data;
+    try {
+      return await rulesApi.listAdvancedRules(groupId);
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   createAdvancedRule: async (groupId, data) => {
-    if (!groupId) throw new Error('Group ID is required');
-    const response = await axios.post(`${RULES_BASE_URL}/group/${groupId}/advanced-rule/create/`, data);
-    return response.data;
+    try {
+      return await rulesApi.createAdvancedRule(groupId, data);
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   updateAdvancedRule: async (id, data) => {
-    if (!id) throw new Error('Rule ID is required');
-    const response = await axios.put(`${RULES_BASE_URL}/advanced-rule/${id}/edit/`, data);
-    return response.data;
+    try {
+      return await rulesApi.updateAdvancedRule(id, data);
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   deleteAdvancedRule: async (id) => {
-    if (!id) throw new Error('Rule ID is required');
-    await axios.delete(`${RULES_BASE_URL}/advanced-rule/${id}/delete/`);
+    try {
+      await rulesApi.deleteAdvancedRule(id);
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   // Utility Endpoints
   getOperatorChoices: async (field) => {
-    if (!field) throw new Error('Field is required');
-    const response = await axios.get(`${RULES_BASE_URL}/operators/`, {
-      params: { field }
-    });
-    return response.data.operators;
+    try {
+      return await rulesApi.getOperatorChoices(field);
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   validateConditions: async (conditions) => {
-    const response = await axios.post(`${RULES_BASE_URL}/validate-conditions/`, { conditions });
-    return response.data;
+    try {
+      return await rulesApi.validateConditions(conditions);
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   validateCalculations: async (calculations) => {
-    const response = await axios.post(`${RULES_BASE_URL}/validate-calculations/`, { calculations });
-    return response.data;
+    try {
+      return await rulesApi.validateCalculations(calculations);
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   getConditionsSchema: async () => {
-    const response = await axios.get(`${RULES_BASE_URL}/conditions-schema/`);
-    return response.data;
+    try {
+      return await rulesApi.getConditionsSchema();
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   getCalculationsSchema: async () => {
-    const response = await axios.get(`${RULES_BASE_URL}/calculations-schema/`);
-    return response.data;
+    try {
+      return await rulesApi.getCalculationsSchema();
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   getAvailableFields: async () => {
-    const response = await axios.get(`${RULES_BASE_URL}/fields/`);
-    return response.data;
+    try {
+      return await rulesApi.getAvailableFields();
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   getCalculationTypes: async () => {
-    const response = await axios.get(`${RULES_BASE_URL}/calculation-types/`);
-    return response.data;
+    try {
+      return await rulesApi.getCalculationTypes();
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   validateRuleValue: async (data) => {
-    const response = await axios.post(`${RULES_BASE_URL}/validate-rule-value/`, data);
-    return response.data;
+    try {
+      return await rulesApi.validateRuleValue(data);
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   getCustomerSkus: async (groupId) => {
-    if (!groupId) throw new Error('Group ID is required');
-    const response = await axios.get(`${RULES_BASE_URL}/group/${groupId}/skus/`);
-    return response.data;
+    try {
+      return await rulesApi.getCustomerSkus(groupId);
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   // Customer Services
   getCustomerServices: async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/customer-services/`);
-      return response.data?.data || [];
+      const response = await customerServiceApi.list();
+      return response?.data || [];
     } catch (error) {
-      console.error('Error fetching customer services:', error);
-      throw error;
+      throw handleApiError(error);
     }
   }
 };

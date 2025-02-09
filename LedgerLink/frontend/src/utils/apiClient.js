@@ -5,12 +5,29 @@ const API_BASE_URL = '/api/v1';
 /**
  * Generic request handler with error handling and token management
  */
-async function request(endpoint, options = {}) {
-  const url = `${API_BASE_URL}${endpoint}`;
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+async function request(endpoint, options = {}, useBaseUrl = true) {
+  const url = useBaseUrl ? `${API_BASE_URL}${endpoint}` : endpoint;
   const token = getAccessToken();
+  const csrfToken = getCookie('csrftoken');
 
   const headers = {
     'Content-Type': 'application/json',
+    'X-CSRFToken': csrfToken,
     ...(token && { 'Authorization': `Bearer ${token}` }),
     ...options.headers,
   };
@@ -71,6 +88,74 @@ async function request(endpoint, options = {}) {
     throw error;
   }
 }
+
+/**
+ * Rules API endpoints
+ */
+export const rulesApi = {
+  // Rule Groups
+  listGroups: () => request('/rules/api/groups/'),
+  getGroup: (id) => request(`/rules/group/${id}/`),
+  createGroup: (data) => request('/rules/api/groups/', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  updateGroup: (id, data) => request(`/rules/group/${id}/edit/`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }),
+  deleteGroup: (id) => request(`/rules/group/${id}/delete/`, {
+    method: 'DELETE',
+  }),
+
+  // Basic Rules
+  listRules: (groupId) => request(`/rules/group/${groupId}/rules/`, {}, false),
+  createRule: (groupId, data) => request(`/rules/group/${groupId}/rule/create/`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }, false),
+  updateRule: (id, data) => request(`/rules/rule/${id}/edit/`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }, false),
+  deleteRule: (id) => request(`/rules/rule/${id}/delete/`, {
+    method: 'DELETE',
+  }, false),
+
+  // Advanced Rules
+  listAdvancedRules: (groupId) => request(`/rules/group/${groupId}/advanced-rules/`, {}, false),
+  createAdvancedRule: (groupId, data) => request(`/rules/group/${groupId}/advanced-rule/create/`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }, false),
+  updateAdvancedRule: (id, data) => request(`/rules/advanced-rule/${id}/edit/`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }, false),
+  deleteAdvancedRule: (id) => request(`/rules/advanced-rule/${id}/delete/`, {
+    method: 'DELETE',
+  }, false),
+
+  // Utility Endpoints
+  getOperatorChoices: (field) => request(`/rules/operators/?field=${field}`, {}, false),
+  validateConditions: (conditions) => request('/rules/validate-conditions/', {
+    method: 'POST',
+    body: JSON.stringify({ conditions }),
+  }, false),
+  validateCalculations: (calculations) => request('/rules/validate-calculations/', {
+    method: 'POST',
+    body: JSON.stringify({ calculations }),
+  }, false),
+  getConditionsSchema: () => request('/rules/conditions-schema/', {}, false),
+  getCalculationsSchema: () => request('/rules/calculations-schema/', {}, false),
+  getAvailableFields: () => request('/rules/fields/', {}, false),
+  getCalculationTypes: () => request('/rules/calculation-types/', {}, false),
+  validateRuleValue: (data) => request('/rules/validate-rule-value/', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }, false),
+  getCustomerSkus: (groupId) => request(`/rules/group/${groupId}/skus/`, {}, false),
+};
 
 /**
  * Customer API endpoints
@@ -324,5 +409,6 @@ export default {
   insertApi,
   cadShippingApi,
   usShippingApi,
+  rulesApi,
   handleApiError,
 };

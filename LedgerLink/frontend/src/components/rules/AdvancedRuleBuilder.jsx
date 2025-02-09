@@ -1,453 +1,398 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Paper,
-  Typography,
-  Divider,
-  TextField,
   Button,
-  IconButton,
-  Grid,
-  Card,
-  CardContent,
-  CardActions,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
   InputLabel,
-  Select,
   MenuItem,
-  Tooltip,
-  Alert
+  Select,
+  TextField,
+  CircularProgress,
+  Alert,
+  Typography,
+  IconButton,
+  Divider,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
-  Code as CodeIcon,
-  Preview as PreviewIcon,
-  DragIndicator as DragIcon
 } from '@mui/icons-material';
+import rulesService from '../../services/rulesService';
 
-const CALCULATION_TYPES = [
-  { value: 'flat_fee', label: 'Flat Fee', description: 'Add fixed amount' },
-  { value: 'percentage', label: 'Percentage', description: 'Add percentage of base price' },
-  { value: 'per_unit', label: 'Per Unit', description: 'Multiply by quantity' },
-  { value: 'weight_based', label: 'Weight Based', description: 'Multiply by weight' },
-  { value: 'volume_based', label: 'Volume Based', description: 'Multiply by volume' },
-  { value: 'tiered_percentage', label: 'Tiered Percentage', description: 'Apply percentage based on value tiers' },
-  { value: 'product_specific', label: 'Product Specific', description: 'Apply specific rates per product' }
-];
+const AdvancedRuleBuilder = ({ groupId, initialData, onSubmit, onCancel }) => {
+  const [formData, setFormData] = useState({
+    field: '',
+    operator: '',
+    value: '',
+    conditions: {},
+    calculations: [],
+    ...initialData,
+  });
+  const [fields, setFields] = useState([]);
+  const [operators, setOperators] = useState([]);
+  const [calculationTypes, setCalculationTypes] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [conditionsSchema, setConditionsSchema] = useState(null);
 
-const FIELD_OPTIONS = [
-  { value: 'reference_number', label: 'Reference Number', type: 'string' },
-  { value: 'ship_to_name', label: 'Ship To Name', type: 'string' },
-  { value: 'ship_to_company', label: 'Ship To Company', type: 'string' },
-  { value: 'ship_to_city', label: 'Ship To City', type: 'string' },
-  { value: 'ship_to_state', label: 'Ship To State', type: 'string' },
-  { value: 'ship_to_country', label: 'Ship To Country', type: 'string' },
-  { value: 'weight_lb', label: 'Weight (lb)', type: 'number' },
-  { value: 'line_items', label: 'Line Items', type: 'number' },
-  { value: 'sku_quantity', label: 'SKU Quantity', type: 'sku' },
-  { value: 'total_item_qty', label: 'Total Item Quantity', type: 'number' },
-  { value: 'packages', label: 'Packages', type: 'number' },
-  { value: 'notes', label: 'Notes', type: 'string' },
-  { value: 'carrier', label: 'Carrier', type: 'string' },
-  { value: 'volume_cuft', label: 'Volume (cuft)', type: 'number' }
-];
+  useEffect(() => {
+    fetchInitialData();
+  }, []);
 
-const OPERATORS = {
-  string: [
-    { value: 'eq', label: 'Equals' },
-    { value: 'ne', label: 'Not equals' },
-    { value: 'in', label: 'In' },
-    { value: 'ni', label: 'Not in' },
-    { value: 'contains', label: 'Contains' },
-    { value: 'ncontains', label: 'Not contains' },
-    { value: 'startswith', label: 'Starts with' },
-    { value: 'endswith', label: 'Ends with' }
-  ],
-  number: [
-    { value: 'gt', label: 'Greater than' },
-    { value: 'lt', label: 'Less than' },
-    { value: 'eq', label: 'Equals' },
-    { value: 'ne', label: 'Not equals' },
-    { value: 'ge', label: 'Greater than or equals' },
-    { value: 'le', label: 'Less than or equals' }
-  ],
-  sku: [
-    { value: 'contains', label: 'Contains' },
-    { value: 'ncontains', label: 'Not contains' },
-    { value: 'only_contains', label: 'Only Contains' }
-  ]
-};
-
-const ConditionCard = ({ condition, onDelete, onUpdate }) => {
-  const handleFieldChange = (event) => {
-    onUpdate({
-      ...condition,
-      field: event.target.value,
-      operator: '',
-      value: ''
-    });
-  };
-
-  const handleOperatorChange = (event) => {
-    onUpdate({
-      ...condition,
-      operator: event.target.value,
-      value: ''
-    });
-  };
-
-  const handleValueChange = (event) => {
-    onUpdate({
-      ...condition,
-      value: event.target.value
-    });
-  };
-
-  const selectedField = FIELD_OPTIONS.find(f => f.value === condition.field);
-  const operators = selectedField ? OPERATORS[selectedField.type] : [];
-
-  return (
-    <Card variant="outlined" sx={{ mb: 2 }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <DragIcon sx={{ mr: 1, cursor: 'move' }} />
-          <Grid container spacing={2}>
-            <Grid item xs={4}>
-              <FormControl fullWidth>
-                <InputLabel>Field</InputLabel>
-                <Select
-                  value={condition.field}
-                  onChange={handleFieldChange}
-                  label="Field"
-                >
-                  {FIELD_OPTIONS.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={4}>
-              <FormControl fullWidth>
-                <InputLabel>Operator</InputLabel>
-                <Select
-                  value={condition.operator}
-                  onChange={handleOperatorChange}
-                  label="Operator"
-                  disabled={!condition.field}
-                >
-                  {operators.map((op) => (
-                    <MenuItem key={op.value} value={op.value}>
-                      {op.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={4}>
-              <TextField
-                fullWidth
-                label="Value"
-                value={condition.value}
-                onChange={handleValueChange}
-                disabled={!condition.operator}
-                type={selectedField?.type === 'number' ? 'number' : 'text'}
-              />
-            </Grid>
-          </Grid>
-        </Box>
-      </CardContent>
-      <CardActions sx={{ justifyContent: 'flex-end' }}>
-        <IconButton onClick={() => onDelete(condition.id)} color="error">
-          <DeleteIcon />
-        </IconButton>
-      </CardActions>
-    </Card>
-  );
-};
-
-ConditionCard.propTypes = {
-  condition: PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    field: PropTypes.string.isRequired,
-    operator: PropTypes.string.isRequired,
-    value: PropTypes.string.isRequired
-  }).isRequired,
-  onDelete: PropTypes.func.isRequired,
-  onUpdate: PropTypes.func.isRequired
-};
-
-const CalculationCard = ({ calculation, onDelete, onUpdate }) => {
-  const handleTypeChange = (event) => {
-    onUpdate({
-      ...calculation,
-      type: event.target.value,
-      value: ''
-    });
-  };
-
-  const handleValueChange = (event) => {
-    onUpdate({
-      ...calculation,
-      value: event.target.value
-    });
-  };
-
-  return (
-    <Card variant="outlined" sx={{ mb: 2 }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <DragIcon sx={{ mr: 1, cursor: 'move' }} />
-          <Grid container spacing={2}>
-            <Grid item xs={6}>
-              <FormControl fullWidth>
-                <InputLabel>Type</InputLabel>
-                <Select
-                  value={calculation.type}
-                  onChange={handleTypeChange}
-                  label="Type"
-                >
-                  {CALCULATION_TYPES.map((type) => (
-                    <MenuItem key={type.value} value={type.value}>
-                      <Tooltip title={type.description}>
-                        <span>{type.label}</span>
-                      </Tooltip>
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                label="Value"
-                value={calculation.value}
-                onChange={handleValueChange}
-                type="number"
-                inputProps={{ step: '0.01' }}
-              />
-            </Grid>
-          </Grid>
-        </Box>
-      </CardContent>
-      <CardActions sx={{ justifyContent: 'flex-end' }}>
-        <IconButton onClick={() => onDelete(calculation.id)} color="error">
-          <DeleteIcon />
-        </IconButton>
-      </CardActions>
-    </Card>
-  );
-};
-
-CalculationCard.propTypes = {
-  calculation: PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    type: PropTypes.string.isRequired,
-    value: PropTypes.string.isRequired
-  }).isRequired,
-  onDelete: PropTypes.func.isRequired,
-  onUpdate: PropTypes.func.isRequired
-};
-
-const AdvancedRuleBuilder = ({ onClose, onSave }) => {
-  const [conditions, setConditions] = useState([]);
-  const [calculations, setCalculations] = useState([]);
-  const [showJson, setShowJson] = useState(false);
-  const [error, setError] = useState('');
-
-  const addCondition = () => {
-    const newCondition = {
-      id: `condition-${Date.now()}`,
-      field: '',
-      operator: '',
-      value: ''
-    };
-    setConditions([...conditions, newCondition]);
-  };
-
-  const addCalculation = () => {
-    const newCalculation = {
-      id: `calculation-${Date.now()}`,
-      type: '',
-      value: ''
-    };
-    setCalculations([...calculations, newCalculation]);
-  };
-
-  const updateCondition = (id, updatedCondition) => {
-    setConditions(conditions.map(c => 
-      c.id === id ? updatedCondition : c
-    ));
-  };
-
-  const updateCalculation = (id, updatedCalculation) => {
-    setCalculations(calculations.map(c => 
-      c.id === id ? updatedCalculation : c
-    ));
-  };
-
-  const deleteCondition = (id) => {
-    setConditions(conditions.filter(c => c.id !== id));
-  };
-
-  const deleteCalculation = (id) => {
-    setCalculations(calculations.filter(c => c.id !== id));
-  };
-
-  const handleSave = () => {
-    // Validate conditions and calculations
-    const invalidConditions = conditions.some(c => 
-      !c.field || !c.operator || !c.value
-    );
-    const invalidCalculations = calculations.some(c => 
-      !c.type || !c.value
-    );
-
-    if (invalidConditions || invalidCalculations) {
-      setError('Please fill in all required fields');
-      return;
+  useEffect(() => {
+    if (formData.field) {
+      fetchOperators(formData.field);
     }
+  }, [formData.field]);
 
-    // Format data for saving
-    const formattedConditions = {};
-    conditions.forEach(c => {
-      formattedConditions[c.field] = { [c.operator]: c.value };
-    });
+  const fetchInitialData = async () => {
+    try {
+      setLoading(true);
+      const [
+        availableFields,
+        availableCalculationTypes,
+        conditionsSchemaData,
+      ] = await Promise.all([
+        rulesService.getAvailableFields(),
+        rulesService.getCalculationTypes(),
+        rulesService.getConditionsSchema(),
+      ]);
+      
+      setFields(availableFields);
+      setCalculationTypes(availableCalculationTypes);
+      setConditionsSchema(conditionsSchemaData);
+    } catch (err) {
+      setError('Failed to fetch initial data. Please try again.');
+      console.error('Error fetching initial data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const formattedCalculations = calculations.map(c => ({
-      type: c.type,
-      value: parseFloat(c.value)
+  const fetchOperators = async (field) => {
+    try {
+      const availableOperators = await rulesService.getOperatorChoices(field);
+      setOperators(availableOperators);
+      if (!availableOperators.find(op => op.value === formData.operator)) {
+        setFormData(prev => ({ ...prev, operator: '' }));
+      }
+    } catch (err) {
+      console.error('Error fetching operators:', err);
+    }
+  };
+
+  const handleBasicFieldChange = async (event) => {
+    const { name, value } = event.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+
+    if (name === 'value') {
+      try {
+        await rulesService.validateRuleValue({
+          field: formData.field,
+          operator: formData.operator,
+          value
+        });
+        setError(null);
+      } catch (err) {
+        setError('Invalid value format for selected field and operator.');
+      }
+    }
+  };
+
+  const handleConditionAdd = () => {
+    setFormData(prev => ({
+      ...prev,
+      conditions: {
+        ...prev.conditions,
+        ['']: { '': '' }
+      }
     }));
+  };
 
-    onSave({
-      conditions: formattedConditions,
-      calculations: formattedCalculations
+  const handleConditionChange = (oldField, field, operator, value) => {
+    setFormData(prev => {
+      const newConditions = { ...prev.conditions };
+      if (oldField !== field) {
+        delete newConditions[oldField];
+      }
+      newConditions[field] = { [operator]: value };
+      return { ...prev, conditions: newConditions };
     });
   };
 
+  const handleConditionRemove = (field) => {
+    setFormData(prev => {
+      const newConditions = { ...prev.conditions };
+      delete newConditions[field];
+      return { ...prev, conditions: newConditions };
+    });
+  };
+
+  const handleCalculationAdd = () => {
+    setFormData(prev => ({
+      ...prev,
+      calculations: [...prev.calculations, { type: '', value: '' }]
+    }));
+  };
+
+  const handleCalculationChange = (index, field, value) => {
+    setFormData(prev => {
+      const newCalculations = [...prev.calculations];
+      newCalculations[index] = {
+        ...newCalculations[index],
+        [field]: value
+      };
+      return { ...prev, calculations: newCalculations };
+    });
+  };
+
+  const handleCalculationRemove = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      calculations: prev.calculations.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    try {
+      setLoading(true);
+      
+      // Validate conditions and calculations
+      await Promise.all([
+        rulesService.validateConditions(formData.conditions),
+        rulesService.validateCalculations(formData.calculations)
+      ]);
+
+      if (initialData) {
+        await onSubmit(initialData.id, formData);
+      } else {
+        await onSubmit(formData);
+      }
+      setError(null);
+    } catch (err) {
+      setError('Failed to save advanced rule. Please check your inputs and try again.');
+      console.error('Error saving advanced rule:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading && !formData.field) {
+    return (
+      <Dialog open fullWidth maxWidth="md">
+        <DialogContent>
+          <Box display="flex" justifyContent="center" p={2}>
+            <CircularProgress />
+          </Box>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h6" gutterBottom>
-        Advanced Rule Builder
-      </Typography>
-      <Divider sx={{ mb: 3 }} />
+    <Dialog open onClose={onCancel} fullWidth maxWidth="md">
+      <DialogTitle>
+        {initialData ? 'Edit Advanced Rule' : 'Create Advanced Rule'}
+      </DialogTitle>
+      <form onSubmit={handleSubmit}>
+        <DialogContent>
+          <Box display="flex" flexDirection="column" gap={2}>
+            {error && (
+              <Alert severity="error">
+                {error}
+              </Alert>
+            )}
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+            {/* Basic Rule Fields */}
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                Basic Rule Settings
+              </Typography>
+              <Box display="flex" gap={2}>
+                <FormControl fullWidth required>
+                  <InputLabel>Field</InputLabel>
+                  <Select
+                    name="field"
+                    value={formData.field}
+                    onChange={handleBasicFieldChange}
+                    label="Field"
+                  >
+                    {fields.map((field) => (
+                      <MenuItem key={field.value} value={field.value}>
+                        {field.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, mb: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-              <Typography variant="subtitle1">Conditions</Typography>
-              <Button
-                startIcon={<AddIcon />}
-                onClick={addCondition}
-                variant="outlined"
-                size="small"
-              >
-                Add Condition
-              </Button>
+                <FormControl fullWidth required disabled={!formData.field}>
+                  <InputLabel>Operator</InputLabel>
+                  <Select
+                    name="operator"
+                    value={formData.operator}
+                    onChange={handleBasicFieldChange}
+                    label="Operator"
+                  >
+                    {operators.map((operator) => (
+                      <MenuItem key={operator.value} value={operator.value}>
+                        {operator.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <TextField
+                  fullWidth
+                  required
+                  label="Value"
+                  name="value"
+                  value={formData.value}
+                  onChange={handleBasicFieldChange}
+                  disabled={!formData.operator}
+                />
+              </Box>
             </Box>
-            {conditions.map((condition) => (
-              <ConditionCard
-                key={condition.id}
-                condition={condition}
-                onDelete={deleteCondition}
-                onUpdate={(updated) => updateCondition(condition.id, updated)}
-              />
-            ))}
-          </Paper>
-        </Grid>
 
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, mb: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-              <Typography variant="subtitle1">Calculations</Typography>
-              <Button
-                startIcon={<AddIcon />}
-                onClick={addCalculation}
-                variant="outlined"
-                size="small"
-              >
-                Add Calculation
-              </Button>
+            <Divider />
+
+            {/* Conditions */}
+            <Box>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6">
+                  Additional Conditions
+                </Typography>
+                <Button
+                  startIcon={<AddIcon />}
+                  onClick={handleConditionAdd}
+                >
+                  Add Condition
+                </Button>
+              </Box>
+
+              {Object.entries(formData.conditions).map(([field, criteria], index) => {
+                const [operator, value] = Object.entries(criteria)[0] || ['', ''];
+                return (
+                  <Box key={index} display="flex" gap={2} mb={2}>
+                    <FormControl fullWidth>
+                      <InputLabel>Field</InputLabel>
+                      <Select
+                        value={field}
+                        onChange={(e) => handleConditionChange(field, e.target.value, operator, value)}
+                        label="Field"
+                      >
+                        {fields.map((f) => (
+                          <MenuItem key={f.value} value={f.value}>
+                            {f.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    <FormControl fullWidth>
+                      <InputLabel>Operator</InputLabel>
+                      <Select
+                        value={operator}
+                        onChange={(e) => handleConditionChange(field, field, e.target.value, value)}
+                        label="Operator"
+                      >
+                        {operators.map((op) => (
+                          <MenuItem key={op.value} value={op.value}>
+                            {op.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    <TextField
+                      fullWidth
+                      label="Value"
+                      value={value}
+                      onChange={(e) => handleConditionChange(field, field, operator, e.target.value)}
+                    />
+
+                    <IconButton
+                      color="error"
+                      onClick={() => handleConditionRemove(field)}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Box>
+                );
+              })}
             </Box>
-            {calculations.map((calculation) => (
-              <CalculationCard
-                key={calculation.id}
-                calculation={calculation}
-                onDelete={deleteCalculation}
-                onUpdate={(updated) => updateCalculation(calculation.id, updated)}
-              />
-            ))}
-          </Paper>
-        </Grid>
-      </Grid>
 
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
-        <Button
-          startIcon={<CodeIcon />}
-          onClick={() => setShowJson(!showJson)}
-          variant="outlined"
-        >
-          {showJson ? 'Hide JSON' : 'Show JSON'}
-        </Button>
-        <Box>
+            <Divider />
+
+            {/* Calculations */}
+            <Box>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6">
+                  Calculations
+                </Typography>
+                <Button
+                  startIcon={<AddIcon />}
+                  onClick={handleCalculationAdd}
+                >
+                  Add Calculation
+                </Button>
+              </Box>
+
+              {formData.calculations.map((calc, index) => (
+                <Box key={index} display="flex" gap={2} mb={2}>
+                  <FormControl fullWidth>
+                    <InputLabel>Type</InputLabel>
+                    <Select
+                      value={calc.type}
+                      onChange={(e) => handleCalculationChange(index, 'type', e.target.value)}
+                      label="Type"
+                    >
+                      {calculationTypes.map((type) => (
+                        <MenuItem key={type.value} value={type.value}>
+                          {type.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <TextField
+                    fullWidth
+                    label="Value"
+                    type="number"
+                    value={calc.value}
+                    onChange={(e) => handleCalculationChange(index, 'value', e.target.value)}
+                    inputProps={{ step: '0.01' }}
+                  />
+
+                  <IconButton
+                    color="error"
+                    onClick={() => handleCalculationRemove(index)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onCancel}>Cancel</Button>
           <Button
-            onClick={onClose}
-            sx={{ mr: 1 }}
-          >
-            Cancel
-          </Button>
-          <Button
+            type="submit"
             variant="contained"
-            onClick={handleSave}
-            startIcon={<PreviewIcon />}
+            color="primary"
+            disabled={loading || !formData.field || !formData.operator || !formData.value}
           >
-            Preview & Save
+            {loading ? <CircularProgress size={24} /> : (initialData ? 'Update' : 'Create')}
           </Button>
-        </Box>
-      </Box>
-
-      {showJson && (
-        <Paper sx={{ p: 2, mt: 2 }}>
-          <Typography variant="subtitle2" gutterBottom>
-            JSON Preview
-          </Typography>
-          <TextField
-            fullWidth
-            multiline
-            rows={10}
-            value={JSON.stringify({
-              conditions: conditions.reduce((acc, c) => ({
-                ...acc,
-                [c.field]: { [c.operator]: c.value }
-              }), {}),
-              calculations: calculations.map(c => ({
-                type: c.type,
-                value: parseFloat(c.value)
-              }))
-            }, null, 2)}
-            InputProps={{
-              readOnly: true
-            }}
-          />
-        </Paper>
-      )}
-    </Box>
+        </DialogActions>
+      </form>
+    </Dialog>
   );
-};
-
-AdvancedRuleBuilder.propTypes = {
-  onClose: PropTypes.func.isRequired,
-  onSave: PropTypes.func.isRequired
 };
 
 export default AdvancedRuleBuilder;

@@ -28,8 +28,31 @@ from customer_services.models import CustomerService
 
 logger = logging.getLogger(__name__)
 
+from rest_framework.permissions import AllowAny
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.http import JsonResponse
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.views import APIView
+
 # API Views
+@method_decorator([csrf_exempt, ensure_csrf_cookie], name='dispatch')
 class RuleGroupAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+        response["Access-Control-Allow-Origin"] = "*"
+        response["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        return response
+
     def get(self, request):
         """List all rule groups"""
         try:
@@ -41,11 +64,28 @@ class RuleGroupAPIView(APIView):
             
             data = [{
                 'id': group.id,
-                'customer_service': group.customer_service_id,
+                'customer_service': {
+                    'id': group.customer_service_id,
+                    'name': str(group.customer_service),
+                    'customer': {
+                        'id': group.customer_service.customer.id,
+                        'name': group.customer_service.customer.company_name
+                    },
+                    'service': {
+                        'id': group.customer_service.service.id,
+                        'name': group.customer_service.service.service_name
+                    }
+                },
                 'logic_operator': group.logic_operator,
                 'rules': [{
                     'id': rule.id,
-                    'advancedrule': hasattr(rule, 'advancedrule')
+                    'field': rule.field,
+                    'operator': rule.operator,
+                    'value': rule.value,
+                    'adjustment_amount': str(rule.adjustment_amount) if rule.adjustment_amount else None,
+                    'advancedrule': hasattr(rule, 'advancedrule'),
+                    'conditions': rule.advancedrule.conditions if hasattr(rule, 'advancedrule') else None,
+                    'calculations': rule.advancedrule.calculations if hasattr(rule, 'advancedrule') else None,
                 } for rule in group.rules.all()]
             } for group in rule_groups]
             
@@ -84,7 +124,18 @@ class RuleGroupAPIView(APIView):
             
             return Response({
                 'id': rule_group.id,
-                'customer_service': rule_group.customer_service_id,
+                'customer_service': {
+                    'id': rule_group.customer_service_id,
+                    'name': str(rule_group.customer_service),
+                    'customer': {
+                        'id': rule_group.customer_service.customer.id,
+                        'name': rule_group.customer_service.customer.company_name
+                    },
+                    'service': {
+                        'id': rule_group.customer_service.service.id,
+                        'name': rule_group.customer_service.service.service_name
+                    }
+                },
                 'logic_operator': rule_group.logic_operator,
                 'rules': []
             }, status=status.HTTP_201_CREATED)

@@ -8,6 +8,14 @@ app_name = 'rules'
 urlpatterns = [
     # API endpoints
     path('api/groups/', views.RuleGroupAPIView.as_view(), name='api_rule_groups'),
+    path('operators/', views.get_operator_choices, name='get_operators'),
+    path('validate-conditions/', views.validate_conditions, name='validate_conditions'),
+    path('validate-calculations/', views.validate_calculations, name='validate_calculations'),
+    path('conditions-schema/', views.get_conditions_schema, name='get_conditions_schema'),
+    path('calculations-schema/', views.get_calculations_schema, name='get_calculations_schema'),
+    path('fields/', views.get_available_fields, name='get_available_fields'),
+    path('calculation-types/', views.get_calculation_types, name='get_calculation_types'),
+    path('validate-rule-value/', views.validate_rule_value, name='validate_rule_value'),
 
     # Rule Group URLs
     path('',
