@@ -359,6 +359,8 @@ const CADShippingList = () => {
           enableGlobalFilter
           enablePagination
           enableSorting
+          enableColumnResizing
+          columnResizeMode="onChange"
           muiToolbarAlertBannerProps={
             error
               ? {
@@ -378,7 +380,7 @@ const CADShippingList = () => {
           )}
           muiTableProps={{
             sx: {
-              tableLayout: 'fixed',
+              tableLayout: 'auto',
             },
           }}
           initialState={{

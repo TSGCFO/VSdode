@@ -1,15 +1,69 @@
 # TODO List
 
+## Customer Services Display Issues
+
+### Frontend Tasks
+1. [ ] Debug blank list view
+   - Investigate empty display in customer services interface
+   - Check data loading lifecycle
+   - Verify component mounting behavior
+   - Test data rendering pipeline
+
+2. [ ] Fix missing customer records
+   - Troubleshoot data retrieval issues
+   - Verify customer data mapping
+   - Check data transformation logic
+   - Test record filtering functionality
+
+3. [ ] Implement error handling
+   - Add comprehensive error states
+   - Implement error boundaries
+   - Add user-friendly error messages
+   - Create error recovery flows
+
+4. [ ] Add logging and monitoring
+   - Implement detailed logging
+   - Track display inconsistencies
+   - Monitor data fetch operations
+   - Log component lifecycle events
+
+5. [ ] Validate data flow
+   - Test API response formatting
+   - Verify backend data retrieval
+   - Check pagination functionality
+   - Validate data loading states
+
+6. [ ] Test and verify fixes
+   - Test all customer service operations
+   - Verify data display consistency
+   - Check error handling functionality
+   - Validate logging implementation
+
+## Completed Tasks
+
+### UI Enhancement
+1. [x] Implement resizable columns
+   - Added column resize functionality
+   - Updated table layout settings
+   - Implemented consistent behavior
+   - Applied to all list components:
+     * Rules components
+     * Product components
+     * Customer components
+     * Shipping components
+     * Materials components
+     * Inserts components
+
 ## Rule Deletion Issues
 
 ### Backend Tasks
-1. [ ] Investigate rule deletion endpoint
+1. [x] Investigate rule deletion endpoint
    - Check URL routing in urls.py
    - Verify view implementation
    - Test cascade deletion behavior
    - Add proper error handling
 
-2. [ ] Add deletion validation
+2. [x] Add deletion validation
    - Verify no dependent data exists
    - Add pre-deletion hooks if needed
    - Implement soft delete if required
@@ -22,13 +76,13 @@
    - Add error logging
 
 ### Frontend Tasks
-1. [ ] Fix rule deletion in apiClient.js
+1. [x] Fix rule deletion in apiClient.js
    - Update endpoint URLs
    - Add error handling
    - Implement proper response parsing
    - Add deletion confirmation
 
-2. [ ] Update UI components
+2. [x] Update UI components
    - Add deletion confirmation dialog
    - Show loading state during deletion
    - Handle error messages

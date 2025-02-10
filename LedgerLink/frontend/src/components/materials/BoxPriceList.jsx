@@ -91,6 +91,12 @@ const BoxPriceList = () => {
         manualPagination={false}
         enableRowSelection={false}
         enableColumnResizing
+        columnResizeMode="onChange"
+        muiTableProps={{
+          sx: {
+            tableLayout: 'auto',
+          },
+        }}
         initialState={{
           density: 'compact',
           pagination: { pageSize: 20 },

@@ -274,6 +274,8 @@ const InsertList = () => {
           enableGlobalFilter
           enablePagination
           enableSorting
+          enableColumnResizing
+          columnResizeMode="onChange"
           muiToolbarAlertBannerProps={
             error
               ? {
@@ -293,7 +295,7 @@ const InsertList = () => {
           )}
           muiTableProps={{
             sx: {
-              tableLayout: 'fixed',
+              tableLayout: 'auto',
             },
           }}
           initialState={{

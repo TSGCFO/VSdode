@@ -230,6 +230,8 @@ const ProductList = () => {
           enableGlobalFilter
           enablePagination
           enableSorting
+          enableColumnResizing
+          columnResizeMode="onChange"
           muiToolbarAlertBannerProps={
             error
               ? {
@@ -249,7 +251,7 @@ const ProductList = () => {
           )}
           muiTableProps={{
             sx: {
-              tableLayout: 'fixed',
+              tableLayout: 'auto',
             },
           }}
           initialState={{

@@ -211,6 +211,8 @@ const CustomerList = () => {
           enableGlobalFilter
           enablePagination
           enableSorting
+          enableColumnResizing
+          columnResizeMode="onChange"
           muiToolbarAlertBannerProps={
             error
               ? {
@@ -230,7 +232,7 @@ const CustomerList = () => {
           )}
           muiTableProps={{
             sx: {
-              tableLayout: 'fixed',
+              tableLayout: 'auto',
             },
           }}
           initialState={{

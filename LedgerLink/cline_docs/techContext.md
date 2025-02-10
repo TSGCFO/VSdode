@@ -35,7 +35,11 @@
 
 3. Frontend Requirements
    - Material UI components mandatory
-   - Material React Table for list views
+   - Material React Table for list views:
+     * Must implement resizable columns
+     * Must use onChange resize mode
+     * Must use auto table layout
+     * Must match orders list behavior
    - Rules app can use alternative UI libraries
    - All components must be responsive
    - All list views must display all model fields

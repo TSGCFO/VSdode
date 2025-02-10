@@ -26,7 +26,10 @@
 ### Frontend Architecture
 1. Component Structure
    - Material UI based components
-   - Material React Table for list views
+   - Material React Table for list views:
+     * Resizable columns with onChange mode
+     * Auto table layout for dynamic widths
+     * Consistent implementation across all list views
    - Responsive design patterns
    - Component-based architecture
 

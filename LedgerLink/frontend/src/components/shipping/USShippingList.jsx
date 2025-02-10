@@ -390,6 +390,8 @@ const USShippingList = () => {
           enableGlobalFilter
           enablePagination
           enableSorting
+          enableColumnResizing
+          columnResizeMode="onChange"
           muiToolbarAlertBannerProps={
             error
               ? {
@@ -409,7 +411,7 @@ const USShippingList = () => {
           )}
           muiTableProps={{
             sx: {
-              tableLayout: 'fixed',
+              tableLayout: 'auto',
             },
           }}
           initialState={{

@@ -240,21 +240,28 @@ LOGGING = {
         },
         'file_debug': {
             'level': 'DEBUG',
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': DEBUG_LOG,
             'formatter': 'verbose',
+            'maxBytes': 1024 * 1024 * 5,  # 5MB
+            'backupCount': 5,
+
         },
         'file_error': {
             'level': 'ERROR',
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': ERROR_LOG,
             'formatter': 'verbose',
+            'maxBytes': 1024 * 1024 * 5,  # 5MB
+            'backupCount': 5,
         },
         'file_api': {
             'level': 'DEBUG',
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': API_LOG,
             'formatter': 'api',
+            'maxBytes': 1024 * 1024 * 5,  # 5MB
+            'backupCount': 5,
         },
     },
     'loggers': {

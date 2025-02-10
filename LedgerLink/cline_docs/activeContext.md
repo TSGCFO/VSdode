@@ -44,7 +44,17 @@
       - Fixed form submission formatting
 
 ## Current Issues
-1. Advanced Rules Testing
+1. Customer Services Display Issues
+   - Blank list view in customer services interface
+   - Missing customer records in front-end display
+   - Need to verify data retrieval from backend
+   - Pagination and data loading issues
+   - Missing error handling for failed fetches
+   - Need logging for display inconsistencies
+   - API response formatting validation needed
+   - Front-end rendering component issues
+
+2. Advanced Rules Testing
    - Need comprehensive testing of advanced rules
    - Verify condition evaluation
    - Test calculation logic
@@ -67,6 +77,20 @@
    - Maintained component state across tab switches
    - Enhanced performance by preventing unnecessary remounts
    - Fixed rule groups list refresh functionality
+
+3. List Components Enhancement
+   - Implemented resizable columns across all list views
+   - Added column resize mode configuration
+   - Updated table layout settings for proper resizing
+   - Matched orders list page behavior
+   - Enhanced user experience with dynamic column widths
+   - Applied consistent implementation across:
+     * Rules components (Basic, Advanced, Groups)
+     * Product components
+     * Customer components
+     * Shipping components (US, CAD)
+     * Materials components
+     * Inserts components
 
 2. Advanced Rules Testing
    - Need comprehensive testing of advanced rules

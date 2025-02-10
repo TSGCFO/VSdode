@@ -71,6 +71,13 @@ const BasicRulesList = ({ groupId }) => {
     enableRowActions: true,
     positionActionsColumn: 'last',
     muiTableContainerProps: { sx: { maxHeight: '500px' } },
+    enableColumnResizing: true,
+    columnResizeMode: "onChange",
+    muiTableProps: {
+      sx: {
+        tableLayout: 'auto',
+      },
+    },
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '1rem' }}>
         <Tooltip title="Edit">
