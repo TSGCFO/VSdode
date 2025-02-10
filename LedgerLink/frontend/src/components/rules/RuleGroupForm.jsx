@@ -7,10 +7,13 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
+  FormHelperText,
   InputLabel,
   MenuItem,
   Select,
   CircularProgress,
+  Alert,
+  Tooltip,
 } from '@mui/material';
 import rulesService from '../../services/rulesService';
 
@@ -31,6 +34,7 @@ const RuleGroupForm = ({ initialData, onSubmit, onCancel }) => {
   });
   const [customerServices, setCustomerServices] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchCustomerServices();
@@ -39,10 +43,24 @@ const RuleGroupForm = ({ initialData, onSubmit, onCancel }) => {
   const fetchCustomerServices = async () => {
     try {
       setLoading(true);
+      setError(null);
       const services = await rulesService.getCustomerServices();
+      console.log('Fetched customer services:', services);
+      if (!Array.isArray(services)) {
+        throw new Error('Invalid response format');
+      }
+      if (services.length === 0) {
+        setError('No customer services available. Please create a customer service first.');
+      }
       setCustomerServices(services);
     } catch (error) {
       console.error('Error fetching customer services:', error);
+      setError(
+        error.message === 'Invalid response format'
+          ? 'Invalid data received from server'
+          : 'Failed to load customer services. Please try again.'
+      );
+      setCustomerServices([]);
     } finally {
       setLoading(false);
     }
@@ -61,18 +79,6 @@ const RuleGroupForm = ({ initialData, onSubmit, onCancel }) => {
     onSubmit(formData);
   };
 
-  if (loading) {
-    return (
-      <Dialog open fullWidth maxWidth="sm">
-        <DialogContent>
-          <Box display="flex" justifyContent="center" p={2}>
-            <CircularProgress />
-          </Box>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
   return (
     <Dialog open onClose={onCancel} fullWidth maxWidth="sm">
       <DialogTitle>
@@ -81,20 +87,37 @@ const RuleGroupForm = ({ initialData, onSubmit, onCancel }) => {
       <form onSubmit={handleSubmit}>
         <DialogContent>
           <Box display="flex" flexDirection="column" gap={2}>
-            <FormControl fullWidth required>
-              <InputLabel>Customer Service</InputLabel>
-              <Select
-                name="customer_service"
-                value={formData.customer_service}
-                onChange={handleChange}
-                label="Customer Service"
-              >
-                {customerServices.map((service) => (
-                  <MenuItem key={service.id} value={service.id}>
-                    {`${service.customer.company_name} - ${service.service.service_name}`}
-                  </MenuItem>
-                ))}
-              </Select>
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+            <FormControl fullWidth required error={!loading && customerServices.length === 0}>
+              <Box display="flex" alignItems="center" gap={1}>
+                <Box flexGrow={1}>
+                  <InputLabel>Customer Service</InputLabel>
+                  <Select
+                    name="customer_service"
+                    value={formData.customer_service}
+                    onChange={handleChange}
+                    label="Customer Service"
+                    disabled={loading || customerServices.length === 0}
+                    fullWidth
+                  >
+                    {customerServices.map((service) => (
+                      <MenuItem key={service.id} value={service.id}>
+                        {`${service.customer_details?.company_name || ''} - ${service.service_details?.service_name || ''}`}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </Box>
+                {loading && <CircularProgress size={20} />}
+              </Box>
+              {loading ? (
+                <FormHelperText>Loading customer services...</FormHelperText>
+              ) : customerServices.length === 0 ? (
+                <FormHelperText error>No customer services available</FormHelperText>
+              ) : null}
             </FormControl>
 
             <FormControl fullWidth required>
@@ -116,14 +139,24 @@ const RuleGroupForm = ({ initialData, onSubmit, onCancel }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={onCancel}>Cancel</Button>
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            disabled={!formData.customer_service}
-          >
-            {initialData ? 'Update' : 'Create'}
-          </Button>
+          <Tooltip title={
+            loading ? 'Loading customer services...' :
+            error ? 'Please resolve the error to continue' :
+            customerServices.length === 0 ? 'No customer services available' :
+            !formData.customer_service ? 'Please select a customer service' :
+            ''
+          }>
+            <span>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={!formData.customer_service || loading || customerServices.length === 0 || error}
+              >
+                {initialData ? 'Update' : 'Create'}
+              </Button>
+            </span>
+          </Tooltip>
         </DialogActions>
       </form>
     </Dialog>

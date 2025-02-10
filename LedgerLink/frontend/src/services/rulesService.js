@@ -24,7 +24,12 @@ const rulesService = {
 
   createRuleGroup: async (data) => {
     try {
-      return await rulesApi.createGroup(data);
+      // Extract just the customer_service ID and logic_operator
+      const payload = {
+        customer_service: data.customer_service,
+        logic_operator: data.logic_operator
+      };
+      return await rulesApi.createGroup(payload);
     } catch (error) {
       throw handleApiError(error);
     }
@@ -188,9 +193,12 @@ const rulesService = {
   // Customer Services
   getCustomerServices: async () => {
     try {
-      const response = await customerServiceApi.list();
-      return Array.isArray(response) ? response : [];
+      console.log('Fetching customer services...');
+      const services = await customerServiceApi.list();
+      console.log('Customer services response:', services);
+      return services;
     } catch (error) {
+      console.error('Error in getCustomerServices:', error);
       throw handleApiError(error);
     }
   }

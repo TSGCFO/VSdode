@@ -25,12 +25,22 @@
    - Frontend foundation laid
 
 3. Rules System Enhancement
-   - Added SKU view fields (sku_name, sku_count) to rules system
-   - Updated forms and validation for new fields
-   - Added comprehensive test coverage
-   - Enhanced admin interface support
+    - Added SKU view fields (sku_name, sku_count) to rules system
+    - Updated forms and validation for new fields
+    - Added comprehensive test coverage
+    - Enhanced admin interface support
+    - Working on customer service integration in rule groups
+      - Investigating data structure mismatch between frontend and API
+      - Debugging customer service display in rule group form
+      - Ensuring proper serialization of nested customer service data
 
 ## Next Steps
+1. Rules System
+    - Fix customer service display in rule group form
+    - Ensure proper data handling between frontend and API
+    - Test rule group creation with customer services
+    - Validate customer service integration
+
 1. Frontend Development
    - Implement Material UI components
    - Create list views using Material React Table

@@ -45,6 +45,30 @@
    - No security/authentication implementation during development
 
 5. Development Guidelines
-   - Frontend components in frontend folder only
-   - Backend logic must remain unaltered
-   - Comprehensive testing required
+    - Frontend components in frontend folder only
+    - Backend logic must remain unaltered
+    - Comprehensive testing required
+
+6. API Response Structure
+    - Customer Services API returns nested data structure:
+      ```json
+      {
+        "success": true,
+        "data": [
+          {
+            "id": number,
+            "customer_details": {
+              "id": number,
+              "company_name": string
+            },
+            "service_details": {
+              "id": number,
+              "service_name": string
+            }
+          }
+        ]
+      }
+      ```
+    - Frontend components must handle nested data appropriately
+    - API responses include success flag and data wrapper
+    - Error responses include error message and status code

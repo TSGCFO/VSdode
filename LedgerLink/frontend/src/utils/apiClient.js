@@ -196,13 +196,14 @@ export const customerApi = {
  * Customer Services API endpoints
  */
 export const customerServiceApi = {
-  list: (params = {}) => {
+  list: async (params = {}) => {
     const queryParams = new URLSearchParams();
     if (params.search) queryParams.append('search', params.search);
     if (params.customer) queryParams.append('customer', params.customer);
     if (params.service) queryParams.append('service', params.service);
     const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
-    return request(`/customer-services/${query}`);
+    const response = await request(`/customer-services/${query}`);
+    return response?.data || [];
   },
   get: (id) => request(`/customer-services/${id}/`),
   create: (data) => request('/customer-services/', {

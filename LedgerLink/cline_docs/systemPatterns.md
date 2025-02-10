@@ -60,11 +60,21 @@
    - DRY principle adherence
 
 2. Frontend Patterns
-   - Component reusability
-   - Material UI design system
-   - Responsive design implementation
+    - Component reusability
+    - Material UI design system
+    - Responsive design implementation
+    - API Response Handling:
+      - Service layer for API interactions
+      - Response unwrapping (data extraction)
+      - Nested data transformation
+      - Error handling standardization
 
 3. Backend Patterns
-   - Model-driven development
-   - API-first approach
-   - Service layer abstraction
+    - Model-driven development
+    - API-first approach
+    - Service layer abstraction
+    - Response Structure:
+      - Success flag in responses
+      - Data wrapper for payload
+      - Nested serialization for related data
+      - Consistent error format

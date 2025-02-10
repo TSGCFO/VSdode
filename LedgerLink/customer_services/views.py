@@ -2,8 +2,11 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.db.models import Q
+import logging
 from .models import CustomerService
 from .serializers import CustomerServiceSerializer
+
+logger = logging.getLogger(__name__)
 
 class CustomerServiceViewSet(viewsets.ModelViewSet):
     """
@@ -22,6 +25,9 @@ class CustomerServiceViewSet(viewsets.ModelViewSet):
         service_id = self.request.query_params.get('service', None)
         search = self.request.query_params.get('search', None)
 
+        logger.debug('Query params - customer_id: %s, service_id: %s, search: %s',
+                    customer_id, service_id, search)
+
         if customer_id:
             queryset = queryset.filter(customer_id=customer_id)
         if service_id:
@@ -32,7 +38,13 @@ class CustomerServiceViewSet(viewsets.ModelViewSet):
                 Q(service__service_name__icontains=search)
             )
         
-        return queryset.select_related('customer', 'service')
+        queryset = queryset.select_related(
+            'customer',
+            'service'
+        ).prefetch_related('skus')
+
+        logger.debug('Filtered queryset count: %d', queryset.count())
+        return queryset
 
     def list(self, request, *args, **kwargs):
         """
@@ -40,10 +52,19 @@ class CustomerServiceViewSet(viewsets.ModelViewSet):
         """
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
-        return Response({
-            'success': True,
-            'data': serializer.data
-        })
+        try:
+            response_data = {
+                'success': True,
+                'data': serializer.data
+            }
+            logger.info('Customer Services Response: %s', response_data)
+            return Response(response_data)
+        except Exception as e:
+            logger.error('Error in customer services list: %s', str(e))
+            return Response({
+                'success': False,
+                'error': 'Failed to fetch customer services'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def create(self, request, *args, **kwargs):
         """

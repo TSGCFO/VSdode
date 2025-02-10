@@ -30,16 +30,25 @@
 
 ## In Progress
 1. Frontend Development
-   - Component implementation
-   - List view creation
-   - Form development
-   - API integration
+    - Component implementation
+    - List view creation
+    - Form development
+    - API integration
+    - Rules System Integration:
+      - Customer service display in rule group form
+      - API response data handling
+      - Nested data transformation
+      - Form validation with complex data
 
 2. Backend Development
-   - API endpoint testing
-   - Data validation
-   - Business logic implementation
-   - Service integration
+    - API endpoint testing
+    - Data validation
+    - Business logic implementation
+    - Service integration
+    - Rules System Enhancement:
+      - Customer service integration
+      - API response structure standardization
+      - Data serialization patterns
 
 ## Remaining Tasks
 1. Frontend
