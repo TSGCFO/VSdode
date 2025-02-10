@@ -74,6 +74,11 @@ async function request(endpoint, options = {}, useBaseUrl = true) {
       }
     }
 
+    // Handle redirect responses (302, 301, etc.) as successful operations
+    if (response.status >= 300 && response.status < 400) {
+      return { success: true };
+    }
+
     try {
       const data = await response.json();
       console.log('API response data:', data);
@@ -87,7 +92,11 @@ async function request(endpoint, options = {}, useBaseUrl = true) {
 
       return data;
     } catch (jsonError) {
-      // Handle non-JSON responses
+      // For successful responses that don't return JSON
+      if (response.ok) {
+        return { success: true };
+      }
+      // For error responses that don't return JSON
       throw {
         status: response.status,
         message: 'Invalid response from server',

@@ -17,6 +17,7 @@ urlpatterns = [
     path('calculation-types/', views.get_calculation_types, name='get_calculation_types'),
     path('validate-rule-value/', views.validate_rule_value, name='validate_rule_value'),
     path('group/<int:group_id>/rules/', views.get_rules, name='get_rules'),
+    path('group/<int:group_id>/rule/create/api/', views.create_rule, name='api_create_rule'),
     path('group/<int:group_id>/advanced-rules/', views.get_advanced_rules, name='get_advanced_rules'),
 
     # Rule Group URLs

@@ -5,7 +5,6 @@ import {
   IconButton,
   Tooltip,
   Typography,
-  CircularProgress,
   Alert,
 } from '@mui/material';
 import { useMaterialReactTable, MaterialReactTable } from 'material-react-table';
@@ -23,6 +22,74 @@ const BasicRulesList = ({ groupId }) => {
   const [error, setError] = useState(null);
   const [editingRule, setEditingRule] = useState(null);
   const [showRuleBuilder, setShowRuleBuilder] = useState(false);
+
+  const columns = [
+    {
+      accessorKey: 'field',
+      header: 'Field',
+      Cell: ({ row }) => {
+        const fieldMap = Object.fromEntries(
+          row.original.FIELD_CHOICES?.map(([value, label]) => [value, label]) || []
+        );
+        return <Typography>{fieldMap[row.original.field] || row.original.field}</Typography>;
+      },
+    },
+    {
+      accessorKey: 'operator',
+      header: 'Operator',
+      Cell: ({ row }) => {
+        const operatorMap = Object.fromEntries(
+          row.original.OPERATOR_CHOICES?.map(([value, label]) => [value, label]) || []
+        );
+        return <Typography>{operatorMap[row.original.operator] || row.original.operator}</Typography>;
+      },
+    },
+    {
+      accessorKey: 'value',
+      header: 'Value',
+    },
+    {
+      accessorKey: 'adjustment_amount',
+      header: 'Adjustment Amount',
+      Cell: ({ row }) => (
+        <Typography>
+          {row.original.adjustment_amount ? `$${row.original.adjustment_amount}` : 'N/A'}
+        </Typography>
+      ),
+    },
+  ];
+
+  const table = useMaterialReactTable({
+    columns,
+    data: rules,
+    enableRowActions: true,
+    positionActionsColumn: 'last',
+    muiTableContainerProps: { sx: { maxHeight: '500px' } },
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '1rem' }}>
+        <Tooltip title="Edit">
+          <IconButton onClick={() => setEditingRule(row.original)}>
+            <EditIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete">
+          <IconButton
+            color="error"
+            onClick={() => handleDeleteRule(row.original.id)}
+          >
+            <DeleteIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
+    initialState: {
+      sorting: [{ id: 'field', desc: false }],
+      pagination: { pageSize: 10 },
+    },
+    state: {
+      isLoading: loading,
+    },
+  });
 
   useEffect(() => {
     if (groupId) {
@@ -76,79 +143,6 @@ const BasicRulesList = ({ groupId }) => {
     }
   };
 
-  const columns = [
-    {
-      accessorKey: 'field',
-      header: 'Field',
-      Cell: ({ row }) => {
-        const fieldMap = Object.fromEntries(
-          row.original.FIELD_CHOICES?.map(([value, label]) => [value, label]) || []
-        );
-        return <Typography>{fieldMap[row.original.field] || row.original.field}</Typography>;
-      },
-    },
-    {
-      accessorKey: 'operator',
-      header: 'Operator',
-      Cell: ({ row }) => {
-        const operatorMap = Object.fromEntries(
-          row.original.OPERATOR_CHOICES?.map(([value, label]) => [value, label]) || []
-        );
-        return <Typography>{operatorMap[row.original.operator] || row.original.operator}</Typography>;
-      },
-    },
-    {
-      accessorKey: 'value',
-      header: 'Value',
-    },
-    {
-      accessorKey: 'adjustment_amount',
-      header: 'Adjustment Amount',
-      Cell: ({ row }) => (
-        <Typography>
-          {row.original.adjustment_amount ? `$${row.original.adjustment_amount}` : 'N/A'}
-        </Typography>
-      ),
-    },
-  ];
-
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  const table = useMaterialReactTable({
-    columns,
-    data: rules,
-    enableRowActions: true,
-    positionActionsColumn: 'last',
-    muiTableContainerProps: { sx: { maxHeight: '500px' } },
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '1rem' }}>
-        <Tooltip title="Edit">
-          <IconButton onClick={() => setEditingRule(row.original)}>
-            <EditIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Delete">
-          <IconButton
-            color="error"
-            onClick={() => handleDeleteRule(row.original.id)}
-          >
-            <DeleteIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    ),
-    initialState: {
-      sorting: [{ id: 'field', desc: false }],
-      pagination: { pageSize: 10 },
-    },
-  });
-
   return (
     <Box>
       {error && (
@@ -170,15 +164,20 @@ const BasicRulesList = ({ groupId }) => {
 
       <MaterialReactTable table={table} />
 
-      {(showRuleBuilder || editingRule) && (
+      {showRuleBuilder && (
+        <RuleBuilder
+          groupId={groupId}
+          onSubmit={handleCreateRule}
+          onCancel={() => setShowRuleBuilder(false)}
+        />
+      )}
+
+      {editingRule && (
         <RuleBuilder
           groupId={groupId}
           initialData={editingRule}
-          onSubmit={editingRule ? handleUpdateRule : handleCreateRule}
-          onCancel={() => {
-            setShowRuleBuilder(false);
-            setEditingRule(null);
-          }}
+          onSubmit={handleUpdateRule}
+          onCancel={() => setEditingRule(null)}
         />
       )}
     </Box>

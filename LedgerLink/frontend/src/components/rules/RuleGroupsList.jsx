@@ -16,6 +16,7 @@ import RuleGroupForm from './RuleGroupForm';
 
 const RuleGroupsList = ({ groups, onSelect, onUpdate, onDelete, onCreateNew }) => {
   const [editingGroup, setEditingGroup] = useState(null);
+  const [selectedGroupId, setSelectedGroupId] = useState(null);
 
   const columns = [
     {
@@ -66,26 +67,34 @@ const RuleGroupsList = ({ groups, onSelect, onUpdate, onDelete, onCreateNew }) =
     setEditingGroup(null);
   };
 
-  console.log('Groups data:', groups); // Debug log
+  const handleRowClick = (row) => {
+    setSelectedGroupId(row.original.id);
+    onSelect(row.original);
+  };
 
   const table = useMaterialReactTable({
     columns,
     data: groups || [],
     enableRowActions: true,
-    enableRowSelection: true,
     positionActionsColumn: 'last',
     muiTableContainerProps: { sx: { maxHeight: '500px' } },
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '1rem' }}>
         <Tooltip title="Edit">
-          <IconButton onClick={() => handleEdit(row.original)}>
+          <IconButton onClick={(e) => {
+            e.stopPropagation(); // Prevent row selection when clicking edit
+            handleEdit(row.original);
+          }}>
             <EditIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Delete">
           <IconButton
             color="error"
-            onClick={() => onDelete(row.original.id)}
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent row selection when clicking delete
+              onDelete(row.original.id);
+            }}
           >
             <DeleteIcon />
           </IconButton>
@@ -93,11 +102,14 @@ const RuleGroupsList = ({ groups, onSelect, onUpdate, onDelete, onCreateNew }) =
       </Box>
     ),
     muiTableBodyRowProps: ({ row }) => ({
-      onClick: () => onSelect(row.original),
+      onClick: () => handleRowClick(row),
       sx: {
         cursor: 'pointer',
+        backgroundColor: row.original.id === selectedGroupId ? 'rgba(25, 118, 210, 0.08)' : 'inherit',
         '&:hover': {
-          backgroundColor: 'rgba(0, 0, 0, 0.04)',
+          backgroundColor: row.original.id === selectedGroupId 
+            ? 'rgba(25, 118, 210, 0.12)' 
+            : 'rgba(0, 0, 0, 0.04)',
         },
       },
     }),

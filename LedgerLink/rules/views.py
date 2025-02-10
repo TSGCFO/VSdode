@@ -41,6 +41,44 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 
+# New API endpoint for creating rules
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create_rule(request, group_id):
+    """Create a new rule via API"""
+    try:
+        rule_group = get_object_or_404(RuleGroup, id=group_id)
+        
+        # Create the rule
+        rule = Rule.objects.create(
+            rule_group=rule_group,
+            field=request.data.get('field'),
+            operator=request.data.get('operator'),
+            value=request.data.get('value'),
+            adjustment_amount=request.data.get('adjustment_amount')
+        )
+        
+        # Return the created rule data
+        return Response({
+            'id': rule.id,
+            'field': rule.field,
+            'operator': rule.operator,
+            'value': rule.value,
+            'adjustment_amount': str(rule.adjustment_amount) if rule.adjustment_amount else None,
+        }, status=status.HTTP_201_CREATED)
+        
+    except ValidationError as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        logger.error(f"Error creating rule: {str(e)}")
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
 # API Views
 @method_decorator([csrf_exempt, ensure_csrf_cookie], name='dispatch')
 class RuleGroupAPIView(APIView):

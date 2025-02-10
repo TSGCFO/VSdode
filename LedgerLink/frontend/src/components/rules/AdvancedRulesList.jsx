@@ -5,7 +5,6 @@ import {
   IconButton,
   Tooltip,
   Typography,
-  CircularProgress,
   Alert,
   Chip,
 } from '@mui/material';
@@ -25,58 +24,6 @@ const AdvancedRulesList = ({ groupId }) => {
   const [error, setError] = useState(null);
   const [editingRule, setEditingRule] = useState(null);
   const [showRuleBuilder, setShowRuleBuilder] = useState(false);
-
-  useEffect(() => {
-    if (groupId) {
-      fetchRules();
-    }
-  }, [groupId]);
-
-  const fetchRules = async () => {
-    try {
-      setLoading(true);
-      const fetchedRules = await rulesService.getAdvancedRules(groupId);
-      setRules(fetchedRules);
-      setError(null);
-    } catch (err) {
-      setError('Failed to fetch advanced rules. Please try again.');
-      console.error('Error fetching advanced rules:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCreateRule = async (ruleData) => {
-    try {
-      await rulesService.createAdvancedRule(groupId, ruleData);
-      await fetchRules();
-      setShowRuleBuilder(false);
-    } catch (err) {
-      setError('Failed to create advanced rule. Please try again.');
-      console.error('Error creating advanced rule:', err);
-    }
-  };
-
-  const handleUpdateRule = async (id, ruleData) => {
-    try {
-      await rulesService.updateAdvancedRule(id, ruleData);
-      await fetchRules();
-      setEditingRule(null);
-    } catch (err) {
-      setError('Failed to update advanced rule. Please try again.');
-      console.error('Error updating advanced rule:', err);
-    }
-  };
-
-  const handleDeleteRule = async (id) => {
-    try {
-      await rulesService.deleteAdvancedRule(id);
-      await fetchRules();
-    } catch (err) {
-      setError('Failed to delete advanced rule. Please try again.');
-      console.error('Error deleting advanced rule:', err);
-    }
-  };
 
   const formatConditions = (conditions) => {
     if (!conditions || Object.keys(conditions).length === 0) {
@@ -151,14 +98,6 @@ const AdvancedRulesList = ({ groupId }) => {
     },
   ];
 
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   const table = useMaterialReactTable({
     columns,
     data: rules,
@@ -198,7 +137,62 @@ const AdvancedRulesList = ({ groupId }) => {
       sorting: [{ id: 'field', desc: false }],
       pagination: { pageSize: 10 },
     },
+    state: {
+      isLoading: loading,
+    },
   });
+
+  useEffect(() => {
+    if (groupId) {
+      fetchRules();
+    }
+  }, [groupId]);
+
+  const fetchRules = async () => {
+    try {
+      setLoading(true);
+      const fetchedRules = await rulesService.getAdvancedRules(groupId);
+      setRules(fetchedRules);
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch advanced rules. Please try again.');
+      console.error('Error fetching advanced rules:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateRule = async (ruleData) => {
+    try {
+      await rulesService.createAdvancedRule(groupId, ruleData);
+      await fetchRules();
+      setShowRuleBuilder(false);
+    } catch (err) {
+      setError('Failed to create advanced rule. Please try again.');
+      console.error('Error creating advanced rule:', err);
+    }
+  };
+
+  const handleUpdateRule = async (id, ruleData) => {
+    try {
+      await rulesService.updateAdvancedRule(id, ruleData);
+      await fetchRules();
+      setEditingRule(null);
+    } catch (err) {
+      setError('Failed to update advanced rule. Please try again.');
+      console.error('Error updating advanced rule:', err);
+    }
+  };
+
+  const handleDeleteRule = async (id) => {
+    try {
+      await rulesService.deleteAdvancedRule(id);
+      await fetchRules();
+    } catch (err) {
+      setError('Failed to delete advanced rule. Please try again.');
+      console.error('Error deleting advanced rule:', err);
+    }
+  };
 
   return (
     <Box>
@@ -221,15 +215,20 @@ const AdvancedRulesList = ({ groupId }) => {
 
       <MaterialReactTable table={table} />
 
-      {(showRuleBuilder || editingRule) && (
+      {showRuleBuilder && (
+        <AdvancedRuleBuilder
+          groupId={groupId}
+          onSubmit={handleCreateRule}
+          onCancel={() => setShowRuleBuilder(false)}
+        />
+      )}
+
+      {editingRule && (
         <AdvancedRuleBuilder
           groupId={groupId}
           initialData={editingRule}
-          onSubmit={editingRule ? handleUpdateRule : handleCreateRule}
-          onCancel={() => {
-            setShowRuleBuilder(false);
-            setEditingRule(null);
-          }}
+          onSubmit={handleUpdateRule}
+          onCancel={() => setEditingRule(null)}
         />
       )}
     </Box>

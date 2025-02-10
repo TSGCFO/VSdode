@@ -34,6 +34,7 @@ const RuleBuilder = ({ groupId, initialData, onSubmit, onCancel }) => {
   }, []);
 
   useEffect(() => {
+    console.log('Field changed:', formData.field);
     if (formData.field) {
       fetchOperators(formData.field);
     }
@@ -43,6 +44,7 @@ const RuleBuilder = ({ groupId, initialData, onSubmit, onCancel }) => {
     try {
       setLoading(true);
       const availableFields = await rulesService.getAvailableFields();
+      console.log('Available fields:', availableFields);
       setFields(availableFields);
     } catch (err) {
       setError('Failed to fetch fields. Please try again.');
@@ -54,7 +56,9 @@ const RuleBuilder = ({ groupId, initialData, onSubmit, onCancel }) => {
 
   const fetchOperators = async (field) => {
     try {
+      console.log('Fetching operators for field:', field);
       const availableOperators = await rulesService.getOperatorChoices(field);
+      console.log('Available operators:', availableOperators);
       setOperators(availableOperators);
       // Reset operator if current one is not valid for new field
       if (!availableOperators.find(op => op.value === formData.operator)) {
@@ -67,7 +71,21 @@ const RuleBuilder = ({ groupId, initialData, onSubmit, onCancel }) => {
 
   const handleChange = async (event) => {
     const { name, value } = event.target;
+    console.log('handleChange:', name, value);
+    
+    // Update form data immediately for UI responsiveness
     setFormData(prev => ({ ...prev, [name]: value }));
+
+    // If field changed, operators will be fetched via useEffect
+    if (name === 'field') {
+      // Reset operator and value when field changes
+      setFormData(prev => ({ 
+        ...prev, 
+        [name]: value,
+        operator: '',
+        value: ''
+      }));
+    }
 
     if (name === 'value') {
       try {
@@ -93,6 +111,7 @@ const RuleBuilder = ({ groupId, initialData, onSubmit, onCancel }) => {
         await onSubmit(formData);
       }
       setError(null);
+      onCancel();
     } catch (err) {
       setError('Failed to save rule. Please check your inputs and try again.');
       console.error('Error saving rule:', err);

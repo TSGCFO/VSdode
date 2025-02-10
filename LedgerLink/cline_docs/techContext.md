@@ -72,3 +72,14 @@
     - Frontend components must handle nested data appropriately
     - API responses include success flag and data wrapper
     - Error responses include error message and status code
+    - Rules API responses may include 302 redirects for successful operations
+    - Operator choices for advanced rules use specialized format:
+      ```json
+      {
+        "operators": [
+          {
+            "value": string,
+            "label": string
+          }
+        ]
+      }
