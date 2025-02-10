@@ -13,10 +13,11 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.translation import gettext_lazy as _
 
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 
 import json
 import logging
@@ -28,7 +29,50 @@ from customer_services.models import CustomerService
 
 logger = logging.getLogger(__name__)
 
-from rest_framework.permissions import AllowAny
+# Add new API endpoint for rule deletion
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_rule(request, pk):
+    """Delete a rule via API"""
+    try:
+        rule = get_object_or_404(Rule, id=pk)
+        group_id = rule.rule_group.id
+        
+        # Check for advanced rule
+        is_advanced = hasattr(rule, 'advancedrule')
+        
+        # Log deletion attempt
+        logger.info(f"Attempting to delete {'advanced ' if is_advanced else ''}rule {pk}", extra={
+            'rule_id': pk,
+            'group_id': group_id,
+            'is_advanced': is_advanced
+        })
+        
+        # Perform deletion
+        rule.delete()
+        
+        # Log successful deletion
+        logger.info(f"{'Advanced r' if is_advanced else 'R'}ule {pk} deleted successfully")
+        
+        return Response({
+            'success': True,
+            'message': f"{'Advanced r' if is_advanced else 'R'}ule deleted successfully",
+            'group_id': group_id
+        })
+        
+    except Rule.DoesNotExist:
+        logger.error(f"Rule {pk} not found")
+        return Response(
+            {'error': 'Rule not found'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        logger.error(f"Error deleting rule {pk}: {str(e)}")
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_http_methods

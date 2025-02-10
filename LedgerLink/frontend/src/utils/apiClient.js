@@ -172,7 +172,7 @@ export const rulesApi = {
     method: 'PUT',
     body: JSON.stringify(data),
   }),
-  deleteRule: (id) => request(`/rules/rule/${id}/delete/`, {
+  deleteRule: (id) => request(`/rules/rule/${id}/delete/api/`, {
     method: 'DELETE',
   }),
 

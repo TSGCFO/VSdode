@@ -7,6 +7,9 @@
 4. [Documentation Requirements](#documentation-requirements)
 5. [Testing Protocols](#testing-protocols)
 6. [Deployment Procedures](#deployment-procedures)
+7. [Rules System](#rules-system)
+
+For detailed information about the Rules System implementation, including API endpoints, frontend components, and error handling, see [Rules System Documentation](rules_system.md).
 
 ## Architectural Principles
 
@@ -70,6 +73,32 @@
    - Accessibility standards
    - Performance optimization
 
+3. Rule Management Components
+   - Rule Deletion:
+     ```jsx
+     // Confirmation Dialog Pattern
+     <Dialog open={deleteConfirm.open} onClose={handleDeleteCancel}>
+       <DialogTitle>Confirm Delete</DialogTitle>
+       <DialogContent>
+         <DialogContentText>
+           Confirmation message
+         </DialogContentText>
+       </DialogContent>
+       <DialogActions>
+         <Button onClick={handleDeleteCancel}>Cancel</Button>
+         <Button onClick={handleDeleteRule} color="error">
+           Delete
+         </Button>
+       </DialogActions>
+     </Dialog>
+     ```
+   - Features:
+     - Confirmation dialog before deletion
+     - Error handling with user feedback
+     - Automatic UI updates after deletion
+     - Loading state management
+     - Comprehensive error logging
+
 ## Version Control
 
 ### Branch Management
@@ -122,6 +151,34 @@
    - Request/response formats
    - Authentication requirements
    - Error responses
+
+2. Rules API Endpoints
+   - Rule Deletion:
+     ```
+     DELETE /rules/rule/{id}/delete/api/
+     
+     Response (Success):
+     {
+       "success": true,
+       "message": "Rule deleted successfully",
+       "group_id": number
+     }
+
+     Response (Error):
+     {
+       "error": "Error message"
+     }
+     
+     Status Codes:
+     - 200: Success
+     - 404: Rule not found
+     - 500: Server error
+     ```
+   - Features:
+     - Handles both basic and advanced rules
+     - Returns group_id for UI state updates
+     - Includes comprehensive error logging
+     - Supports cascade deletion
 
 2. OpenAPI/Swagger
    - Keep documentation updated

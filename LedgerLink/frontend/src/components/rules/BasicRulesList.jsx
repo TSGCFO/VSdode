@@ -6,6 +6,11 @@ import {
   Tooltip,
   Typography,
   Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from '@mui/material';
 import { useMaterialReactTable, MaterialReactTable } from 'material-react-table';
 import {
@@ -22,6 +27,7 @@ const BasicRulesList = ({ groupId }) => {
   const [error, setError] = useState(null);
   const [editingRule, setEditingRule] = useState(null);
   const [showRuleBuilder, setShowRuleBuilder] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState({ open: false, ruleId: null });
 
   const columns = [
     {
@@ -75,7 +81,7 @@ const BasicRulesList = ({ groupId }) => {
         <Tooltip title="Delete">
           <IconButton
             color="error"
-            onClick={() => handleDeleteRule(row.original.id)}
+            onClick={() => handleDeleteConfirm(row.original.id)}
           >
             <DeleteIcon />
           </IconButton>
@@ -133,10 +139,20 @@ const BasicRulesList = ({ groupId }) => {
     }
   };
 
-  const handleDeleteRule = async (id) => {
+  const handleDeleteConfirm = (id) => {
+    setDeleteConfirm({ open: true, ruleId: id });
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirm({ open: false, ruleId: null });
+  };
+
+  const handleDeleteRule = async () => {
     try {
+      const id = deleteConfirm.ruleId;
       await rulesService.deleteRule(id);
       await fetchRules();
+      setDeleteConfirm({ open: false, ruleId: null });
     } catch (err) {
       setError('Failed to delete rule. Please try again.');
       console.error('Error deleting rule:', err);
@@ -180,6 +196,30 @@ const BasicRulesList = ({ groupId }) => {
           onCancel={() => setEditingRule(null)}
         />
       )}
+
+      <Dialog
+        open={deleteConfirm.open}
+        onClose={handleDeleteCancel}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">
+          Confirm Delete
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Are you sure you want to delete this rule? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteRule} color="error" variant="contained">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

@@ -23,9 +23,21 @@ const RulesDashboard = () => {
   const [error, setError] = useState(null);
   const [showGroupForm, setShowGroupForm] = useState(false);
 
+  // Initial data load
   useEffect(() => {
     fetchRuleGroups();
   }, []);
+
+  // Refresh data when returning to groups tab
+  useEffect(() => {
+    if (activeTab === 0) {
+      // Small delay to ensure proper state update
+      const timer = setTimeout(() => {
+        fetchRuleGroups();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab]);
 
   const fetchRuleGroups = async () => {
     try {
@@ -42,7 +54,20 @@ const RulesDashboard = () => {
   };
 
   const handleTabChange = (event, newValue) => {
+    // Reset error state on tab change
+    setError(null);
+    
+    // Update active tab
     setActiveTab(newValue);
+    
+    // Handle tab-specific logic
+    if (newValue === 0) {
+      // When switching to groups tab, maintain selection but refresh data
+      setLoading(true);
+      fetchRuleGroups().finally(() => {
+        setLoading(false);
+      });
+    }
   };
 
   const handleGroupSelect = (group) => {
@@ -111,31 +136,29 @@ const RulesDashboard = () => {
         </Tabs>
       </Paper>
 
-      {activeTab === 0 && (
-        <Box>
-          <RuleGroupsList
-            groups={ruleGroups}
-            onSelect={handleGroupSelect}
-            onUpdate={handleGroupUpdate}
-            onDelete={handleGroupDelete}
-            onCreateNew={() => setShowGroupForm(true)}
+      <Box sx={{ display: activeTab === 0 ? 'block' : 'none' }}>
+        <RuleGroupsList
+          groups={ruleGroups}
+          onSelect={handleGroupSelect}
+          onUpdate={handleGroupUpdate}
+          onDelete={handleGroupDelete}
+          onCreateNew={() => setShowGroupForm(true)}
+        />
+        {showGroupForm && (
+          <RuleGroupForm
+            onSubmit={handleGroupCreate}
+            onCancel={() => setShowGroupForm(false)}
           />
-          {showGroupForm && (
-            <RuleGroupForm
-              onSubmit={handleGroupCreate}
-              onCancel={() => setShowGroupForm(false)}
-            />
-          )}
-        </Box>
-      )}
+        )}
+      </Box>
 
-      {activeTab === 1 && selectedGroup && (
-        <BasicRulesList groupId={selectedGroup.id} />
-      )}
+      <Box sx={{ display: activeTab === 1 ? 'block' : 'none' }}>
+        {selectedGroup && <BasicRulesList groupId={selectedGroup.id} />}
+      </Box>
 
-      {activeTab === 2 && selectedGroup && (
-        <AdvancedRulesList groupId={selectedGroup.id} />
-      )}
+      <Box sx={{ display: activeTab === 2 ? 'block' : 'none' }}>
+        {selectedGroup && <AdvancedRulesList groupId={selectedGroup.id} />}
+      </Box>
     </Container>
   );
 };
