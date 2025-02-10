@@ -42,38 +42,76 @@ from rest_framework import status
 from rest_framework.views import APIView
 
 # New API endpoint for creating rules
-@api_view(['POST'])
+@api_view(['POST', 'PUT'])
 @permission_classes([AllowAny])
-def create_rule(request, group_id):
-    """Create a new rule via API"""
+def create_or_update_rule(request, group_id=None, pk=None):
+    """Create or update a rule via API"""
     try:
-        rule_group = get_object_or_404(RuleGroup, id=group_id)
-        
-        # Create the rule
-        rule = Rule.objects.create(
-            rule_group=rule_group,
-            field=request.data.get('field'),
-            operator=request.data.get('operator'),
-            value=request.data.get('value'),
-            adjustment_amount=request.data.get('adjustment_amount')
-        )
-        
-        # Return the created rule data
-        return Response({
-            'id': rule.id,
-            'field': rule.field,
-            'operator': rule.operator,
-            'value': rule.value,
-            'adjustment_amount': str(rule.adjustment_amount) if rule.adjustment_amount else None,
-        }, status=status.HTTP_201_CREATED)
-        
+        if request.method == 'PUT':
+            # Update existing rule
+            rule = get_object_or_404(Rule, id=pk)
+            rule.field = request.data.get('field', rule.field)
+            rule.operator = request.data.get('operator', rule.operator)
+            rule.value = request.data.get('value', rule.value)
+            rule.adjustment_amount = request.data.get('adjustment_amount', rule.adjustment_amount)
+            rule.save()
+            
+            logger.info(f"Rule {pk} updated successfully", extra={
+                'rule_id': pk,
+                'field': rule.field,
+                'operator': rule.operator,
+                'value': rule.value
+            })
+            
+            return Response({
+                'id': rule.id,
+                'field': rule.field,
+                'operator': rule.operator,
+                'value': rule.value,
+                'adjustment_amount': str(rule.adjustment_amount) if rule.adjustment_amount else None,
+            })
+        else:
+            # Create new rule
+            rule_group = get_object_or_404(RuleGroup, id=group_id)
+            rule = Rule.objects.create(
+                rule_group=rule_group,
+                field=request.data.get('field'),
+                operator=request.data.get('operator'),
+                value=request.data.get('value'),
+                adjustment_amount=request.data.get('adjustment_amount')
+            )
+            
+            logger.info(f"New rule created for group {group_id}", extra={
+                'group_id': group_id,
+                'rule_id': rule.id,
+                'field': rule.field,
+                'operator': rule.operator,
+                'value': rule.value
+            })
+            
+            return Response({
+                'id': rule.id,
+                'field': rule.field,
+                'operator': rule.operator,
+                'value': rule.value,
+                'adjustment_amount': str(rule.adjustment_amount) if rule.adjustment_amount else None,
+            }, status=status.HTTP_201_CREATED)
+    
     except ValidationError as e:
+        logger.error(f"Validation error: {str(e)}", extra={
+            'data': request.data,
+            'error': str(e)
+        })
         return Response(
             {'error': str(e)},
             status=status.HTTP_400_BAD_REQUEST
         )
     except Exception as e:
-        logger.error(f"Error creating rule: {str(e)}")
+        logger.error(f"Error processing rule: {str(e)}", extra={
+            'method': request.method,
+            'data': request.data,
+            'error': str(e)
+        })
         return Response(
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR

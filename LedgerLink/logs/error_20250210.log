@@ -1,0 +1,4 @@
+[2025-02-10 13:46:40,128] [ERROR] [rules.views] [views.create_or_update_rule] Validation error: ['“” value must be a decimal number.']
+[2025-02-10 13:46:55,937] [ERROR] [rules.views] [views.create_or_update_rule] Validation error: ['“” value must be a decimal number.']
+[2025-02-10 13:47:20,191] [ERROR] [rules.views] [views.create_or_update_rule] Validation error: ['“” value must be a decimal number.']
+[2025-02-10 13:54:06,999] [ERROR] [rules.views] [views.create_or_update_rule] Validation error: ['“” value must be a decimal number.']

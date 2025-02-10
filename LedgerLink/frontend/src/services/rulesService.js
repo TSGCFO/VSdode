@@ -178,20 +178,7 @@ const rulesService = {
   createRule: async (groupId, data) => {
     try {
       logDebug('createRule', `Creating rule for group ${groupId} with data:`, data);
-      const response = await fetch(`/api/v1/rules/group/${groupId}/rule/create/api/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create rule');
-      }
-      
-      const result = await response.json();
+      const result = await rulesApi.createRule(groupId, data);
       logDebug('createRule', 'Created rule:', result);
       return result;
     } catch (error) {

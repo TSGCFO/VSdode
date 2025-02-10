@@ -22,7 +22,10 @@ const RuleBuilder = ({ groupId, initialData, onSubmit, onCancel }) => {
     operator: '',
     value: '',
     adjustment_amount: '',
-    ...initialData,
+    ...(initialData ? {
+      ...initialData,
+      value: initialData.value || ''
+    } : {})
   });
   const [fields, setFields] = useState([]);
   const [operators, setOperators] = useState([]);
@@ -73,30 +76,53 @@ const RuleBuilder = ({ groupId, initialData, onSubmit, onCancel }) => {
     const { name, value } = event.target;
     console.log('handleChange:', name, value);
     
+    // Format the value if needed
+    const formattedValue = formatValue(name, value);
+    
     // Update form data immediately for UI responsiveness
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: formattedValue }));
 
-    // If field changed, operators will be fetched via useEffect
+    // If field changed, operators will be fetched via useEffect and fields reset
     if (name === 'field') {
-      // Reset operator and value when field changes
-      setFormData(prev => ({ 
-        ...prev, 
-        [name]: value,
+      setFormData(prev => ({
+        ...prev,
+        [name]: formattedValue,
         operator: '',
-        value: ''
+        value: isNumericField(formattedValue) ? '0' : '' // Initialize numeric fields with '0'
       }));
+      return; // Skip validation as we're resetting fields
     }
 
-    if (name === 'value') {
+    // For any field change that affects validation
+    if (['field', 'operator', 'value'].includes(name)) {
       try {
-        await rulesService.validateRuleValue({
-          field: formData.field,
-          operator: formData.operator,
-          value
-        });
-        setError(null);
+        const updatedFormData = {
+          field: name === 'field' ? formattedValue : formData.field,
+          operator: name === 'operator' ? formattedValue : formData.operator,
+          value: name === 'value' ? formattedValue : formData.value
+        };
+        
+        // Only validate if we have all required fields
+        if (updatedFormData.field && updatedFormData.operator && updatedFormData.value) {
+          // For numeric fields, ensure the value is a valid number
+          if (isNumericField(updatedFormData.field)) {
+            const numValue = parseFloat(updatedFormData.value);
+            if (isNaN(numValue)) {
+              throw new Error('Value must be a valid number');
+            }
+            // Update with the parsed number to ensure proper format
+            updatedFormData.value = numValue.toString();
+          }
+          
+          await rulesService.validateRuleValue(updatedFormData);
+          setError(null);
+        } else {
+          // Clear error if we don't have all fields yet
+          setError(null);
+        }
       } catch (err) {
-        setError('Invalid value format for selected field and operator.');
+        const errorMessage = err.response?.data?.error || err.message || 'Invalid value format for selected field and operator.';
+        setError(errorMessage);
       }
     }
   };
@@ -105,15 +131,28 @@ const RuleBuilder = ({ groupId, initialData, onSubmit, onCancel }) => {
     event.preventDefault();
     try {
       setLoading(true);
+      
+      // Format data before submission
+      const submissionData = {
+        ...formData,
+        value: isNumericField(formData.field)
+          ? parseFloat(formData.value || 0).toString()
+          : formData.value,
+        adjustment_amount: formData.adjustment_amount
+          ? parseFloat(formData.adjustment_amount).toString()
+          : null
+      };
+
       if (initialData) {
-        await onSubmit(initialData.id, formData);
+        await onSubmit(initialData.id, submissionData);
       } else {
-        await onSubmit(formData);
+        await onSubmit(submissionData);
       }
       setError(null);
       onCancel();
     } catch (err) {
-      setError('Failed to save rule. Please check your inputs and try again.');
+      const errorMessage = err.response?.data?.error || err.message || 'Failed to save rule. Please check your inputs and try again.';
+      setError(errorMessage);
       console.error('Error saving rule:', err);
     } finally {
       setLoading(false);
@@ -130,6 +169,18 @@ const RuleBuilder = ({ groupId, initialData, onSubmit, onCancel }) => {
       'packages'
     ];
     return numericFields.includes(field);
+  };
+
+  const formatValue = (name, value) => {
+    // Handle numeric fields
+    if (name === 'value' && isNumericField(formData.field)) {
+      // Convert empty string to 0
+      if (value === '') return '0';
+      // Ensure decimal format for numeric fields
+      const num = parseFloat(value);
+      return isNaN(num) ? '0' : num.toString();
+    }
+    return value;
   };
 
   if (loading && !formData.field) {

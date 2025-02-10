@@ -1,4 +1,5 @@
 import { getAccessToken, refreshAccessToken, logout } from './auth';
+import logger from './logger';
 
 const API_BASE_URL = '/api/v1';
 
@@ -40,14 +41,28 @@ async function request(endpoint, options = {}, useBaseUrl = true) {
   };
 
   try {
-    console.log('Making API request to:', url);
+    logger.logApiRequest(options.method || 'GET', url, requestOptions);
     const response = await fetch(url, requestOptions);
-    console.log('API response status:', response.status);
+    
+    // Log redirect responses
+    if (response.status >= 300 && response.status < 400) {
+      logger.info(`Redirect response received: ${response.status}`, {
+        location: response.headers.get('location'),
+        status: response.status
+      });
+      return { success: true };
+    }
     
     if (response.status === 401) {
-      // Token might be expired, try to refresh
+      logger.warn('Authentication failed, attempting token refresh', {
+        url,
+        originalStatus: response.status
+      });
+      
       try {
         const newToken = await refreshAccessToken();
+        logger.info('Token refresh successful, retrying original request');
+        
         // Retry the request with new token
         const retryOptions = {
           ...requestOptions,
@@ -56,21 +71,31 @@ async function request(endpoint, options = {}, useBaseUrl = true) {
             'Authorization': `Bearer ${newToken}`,
           },
         };
+        
+        logger.logApiRequest(`${options.method || 'GET'} (Retry)`, url, retryOptions);
         const retryResponse = await fetch(url, retryOptions);
         const data = await retryResponse.json();
+        logger.logApiResponse(`${options.method || 'GET'} (Retry)`, url, retryResponse, data);
 
         if (!retryResponse.ok) {
-          throw {
+          const error = {
             status: retryResponse.status,
             message: data.detail || 'An error occurred',
+            data: data
           };
+          logger.error('Retry request failed after token refresh', error);
+          throw error;
         }
 
         return data;
       } catch (refreshError) {
-        // If refresh fails, log out the user
+        logger.error('Token refresh failed, logging out user', refreshError);
         logout();
-        throw { status: 401, message: 'Session expired. Please log in again.' };
+        throw {
+          status: 401,
+          message: 'Session expired. Please log in again.',
+          originalError: refreshError
+        };
       }
     }
 
@@ -81,29 +106,39 @@ async function request(endpoint, options = {}, useBaseUrl = true) {
 
     try {
       const data = await response.json();
-      console.log('API response data:', data);
+      logger.logApiResponse(options.method || 'GET', url, response, data);
 
       if (!response.ok) {
-        throw {
+        const error = {
           status: response.status,
           message: data.detail || data.message || 'An error occurred',
+          data: data
         };
+        logger.error(`API Error Response: ${response.status}`, error);
+        throw error;
       }
 
       return data;
     } catch (jsonError) {
       // For successful responses that don't return JSON
       if (response.ok) {
+        logger.info('Non-JSON success response', {
+          status: response.status,
+          url: url
+        });
         return { success: true };
       }
       // For error responses that don't return JSON
-      throw {
+      const error = {
         status: response.status,
         message: 'Invalid response from server',
+        originalError: jsonError
       };
+      logger.error('JSON Parsing Error', error);
+      throw error;
     }
   } catch (error) {
-    console.error('API Request Error:', error);
+    logger.logApiError(options.method || 'GET', url, error);
     throw error;
   }
 }
@@ -129,11 +164,11 @@ export const rulesApi = {
 
   // Basic Rules
   listRules: (groupId) => request(`/rules/group/${groupId}/rules/`),
-  createRule: (groupId, data) => request(`/rules/group/${groupId}/rule/create/`, {
+  createRule: (groupId, data) => request(`/rules/group/${groupId}/rule/create/api/`, {
     method: 'POST',
     body: JSON.stringify(data),
   }),
-  updateRule: (id, data) => request(`/rules/rule/${id}/edit/`, {
+  updateRule: (id, data) => request(`/rules/rule/${id}/edit/api/`, {
     method: 'PUT',
     body: JSON.stringify(data),
   }),
@@ -396,26 +431,47 @@ export const usShippingApi = {
 
 export const handleApiError = (error) => {
   if (!error) {
+    logger.error('Unknown API error', { error: 'No error object provided' });
     return 'An unknown error occurred.';
   }
 
   // Handle network errors
   if (error instanceof TypeError && error.message === 'Failed to fetch') {
+    logger.error('Network Error', {
+      type: 'NetworkError',
+      message: error.message,
+      stack: error.stack
+    });
     return 'Network error. Please check your connection.';
   }
 
+  // Log detailed error information
+  const errorDetails = {
+    status: error.status,
+    message: error.message,
+    originalError: error.originalError || null,
+    data: error.data || null,
+    stack: error.stack || null
+  };
+
   switch (error.status) {
     case 404:
+      logger.error('Resource Not Found', errorDetails);
       return 'The requested resource was not found.';
     case 401:
+      logger.error('Authentication Error', errorDetails);
       return 'Please log in to continue.';
     case 403:
+      logger.error('Authorization Error', errorDetails);
       return 'You do not have permission to perform this action.';
     case 400:
+      logger.error('Bad Request', errorDetails);
       return error.message || 'Invalid request. Please check your input.';
     case 500:
+      logger.error('Server Error', errorDetails);
       return 'Server error. Please try again later.';
     default:
+      logger.error('Unexpected API Error', errorDetails);
       return error.message || 'An unexpected error occurred. Please try again later.';
   }
 };
