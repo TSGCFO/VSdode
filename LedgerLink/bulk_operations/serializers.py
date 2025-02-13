@@ -47,7 +47,9 @@ class CustomerBulkSerializer(BulkOperationBaseSerializer):
 
 
 class OrderBulkSerializer(BulkOperationBaseSerializer):
+    transaction_id = serializers.IntegerField()  # Primary key, externally assigned
     customer = serializers.IntegerField()
+    close_date = serializers.DateTimeField(required=False)
     reference_number = serializers.CharField(max_length=50)
     ship_to_name = serializers.CharField(max_length=255)
     ship_to_company = serializers.CharField(max_length=255, required=False, allow_blank=True)
@@ -58,8 +60,13 @@ class OrderBulkSerializer(BulkOperationBaseSerializer):
     ship_to_zip = serializers.CharField(max_length=20)
     ship_to_country = serializers.CharField(max_length=100, required=False, allow_blank=True)
     weight_lb = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    line_items = serializers.IntegerField(required=False)
     sku_quantity = serializers.JSONField(required=False)
     total_item_qty = serializers.IntegerField(required=False)
+    volume_cuft = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    packages = serializers.IntegerField(required=False)
+    notes = serializers.CharField(required=False, allow_blank=True)
+    carrier = serializers.CharField(max_length=50, required=False, allow_blank=True)
     status = serializers.ChoiceField(
         choices=['draft', 'submitted', 'shipped', 'delivered', 'cancelled'],
         required=False,

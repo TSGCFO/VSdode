@@ -22,7 +22,6 @@ import {
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
   Description as FileIcon,
-  NavigateNext as NavigateNextIcon,
 } from '@mui/icons-material';
 
 const FileUploader = ({ selectedTemplate, onFileSelect, error }) => {
@@ -112,13 +111,6 @@ const FileUploader = ({ selectedTemplate, onFileSelect, error }) => {
     fileInputRef.current.click();
   };
 
-  const handleNext = () => {
-    // Trigger file validation
-    if (selectedFile) {
-      onFileSelect(selectedFile);
-    }
-  };
-
   const getFieldDescription = (field, type) => {
     if (selectedTemplate.type === 'services' && field === 'charge_type') {
       return (
@@ -143,7 +135,36 @@ const FileUploader = ({ selectedTemplate, onFileSelect, error }) => {
         </Box>
       );
     }
-    return type === 'choice' ? 'Choice field' : type;
+
+    // Get field definition from template
+    const fields = selectedTemplate.fields || {};
+    const fieldDef = fields[field] || {};
+    
+    if (fieldDef.description) {
+      return fieldDef.description;
+    }
+
+    if (type === 'choice' && fieldDef.choices) {
+      return (
+        <Box>
+          <Typography variant="body2" color="text.primary">
+            Valid choices:
+          </Typography>
+          <List dense>
+            {fieldDef.choices.map(([value, label]) => (
+              <ListItem key={value}>
+                <ListItemText 
+                  primary={value}
+                  secondary={label}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      );
+    }
+
+    return type;
   };
 
   return (
@@ -280,8 +301,7 @@ const FileUploader = ({ selectedTemplate, onFileSelect, error }) => {
           <Button
             variant="contained"
             color="primary"
-            endIcon={<NavigateNextIcon />}
-            onClick={handleNext}
+            onClick={() => onFileSelect(selectedFile)}
           >
             Next: Validate File
           </Button>

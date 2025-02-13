@@ -138,8 +138,10 @@ class CSVTemplateGenerator:
     @staticmethod
     def _get_order_fields() -> Dict[str, Dict[str, Any]]:
         return {
-            'customer': {'type': 'integer', 'required': True},
-            'reference_number': {'type': 'string', 'required': True},
+            'transaction_id': {'type': 'integer', 'required': True, 'description': 'Primary key, externally assigned'},
+            'customer': {'type': 'integer', 'required': True, 'description': 'Customer ID'},
+            'close_date': {'type': 'datetime', 'required': False, 'description': 'Order close date (YYYY-MM-DD HH:MM:SS)'},
+            'reference_number': {'type': 'string', 'required': True, 'description': 'External reference number'},
             'ship_to_name': {'type': 'string', 'required': True},
             'ship_to_company': {'type': 'string', 'required': False},
             'ship_to_address': {'type': 'string', 'required': True},
@@ -148,11 +150,38 @@ class CSVTemplateGenerator:
             'ship_to_state': {'type': 'string', 'required': True},
             'ship_to_zip': {'type': 'string', 'required': True},
             'ship_to_country': {'type': 'string', 'required': False},
-            'weight_lb': {'type': 'decimal', 'required': False},
-            'sku_quantity': {'type': 'json', 'required': False},
-            'total_item_qty': {'type': 'integer', 'required': False},
-            'status': {'type': 'string', 'required': False},
-            'priority': {'type': 'string', 'required': False},
+            'weight_lb': {'type': 'decimal', 'required': False, 'description': 'Weight in pounds'},
+            'line_items': {'type': 'integer', 'required': False, 'description': 'Number of line items'},
+            'sku_quantity': {'type': 'json', 'required': False, 'description': 'JSON object mapping SKUs to quantities'},
+            'total_item_qty': {'type': 'integer', 'required': False, 'description': 'Total quantity of all items'},
+            'volume_cuft': {'type': 'decimal', 'required': False, 'description': 'Volume in cubic feet'},
+            'packages': {'type': 'integer', 'required': False, 'description': 'Number of packages'},
+            'notes': {'type': 'string', 'required': False, 'description': 'Additional notes'},
+            'carrier': {'type': 'string', 'required': False, 'description': 'Shipping carrier'},
+            'status': {
+                'type': 'choice',
+                'required': False,
+                'choices': [
+                    ('draft', 'Draft'),
+                    ('submitted', 'Submitted'),
+                    ('shipped', 'Shipped'),
+                    ('delivered', 'Delivered'),
+                    ('cancelled', 'Cancelled')
+                ],
+                'default': 'draft',
+                'description': 'Order status'
+            },
+            'priority': {
+                'type': 'choice',
+                'required': False,
+                'choices': [
+                    ('low', 'Low'),
+                    ('medium', 'Medium'),
+                    ('high', 'High')
+                ],
+                'default': 'medium',
+                'description': 'Order priority'
+            },
         }
 
     @staticmethod
