@@ -247,7 +247,10 @@ export const customerServiceApi = {
     if (params.service) queryParams.append('service', params.service);
     const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
     const response = await request(`/customer-services/${query}`);
-    return response?.data || [];
+    return {
+      success: true,
+      data: response.data || []
+    };
   },
   get: (id) => request(`/customer-services/${id}/`),
   create: (data) => request('/customer-services/', {
