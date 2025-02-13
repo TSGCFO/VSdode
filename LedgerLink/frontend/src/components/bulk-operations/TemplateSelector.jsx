@@ -13,6 +13,7 @@ import {
 import {
   Download as DownloadIcon,
   Info as InfoIcon,
+  NavigateNext as NavigateNextIcon,
 } from '@mui/icons-material';
 
 const TemplateSelector = ({ onSelect }) => {
@@ -45,22 +46,17 @@ const TemplateSelector = ({ onSelect }) => {
   const handleTemplateSelect = async (template) => {
     try {
       // Fetch template info before selection
-      const response = await fetch(`/api/v1/bulk-operations/templates/${template.type}/`);
+      const response = await fetch(`/api/v1/bulk-operations/templates/template-info/${template.type}/`);
       const result = await response.json();
 
       if (result.success) {
-        setSelectedTemplate({
+        const templateWithInfo = {
           ...template,
           fields: result.data.fields,
           requiredFields: result.data.requiredFields,
           fieldTypes: result.data.fieldTypes,
-        });
-        onSelect({
-          ...template,
-          fields: result.data.fields,
-          requiredFields: result.data.requiredFields,
-          fieldTypes: result.data.fieldTypes,
-        });
+        };
+        setSelectedTemplate(templateWithInfo);
       } else {
         setError(result.error || 'Failed to fetch template information');
       }
@@ -91,6 +87,12 @@ const TemplateSelector = ({ onSelect }) => {
       document.body.removeChild(a);
     } catch (err) {
       setError('Error downloading template: ' + err.message);
+    }
+  };
+
+  const handleNext = () => {
+    if (selectedTemplate) {
+      onSelect(selectedTemplate);
     }
   };
 
@@ -157,6 +159,19 @@ const TemplateSelector = ({ onSelect }) => {
           </Grid>
         ))}
       </Grid>
+
+      {selectedTemplate && (
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+          <Button
+            variant="contained"
+            color="primary"
+            endIcon={<NavigateNextIcon />}
+            onClick={handleNext}
+          >
+            Next: Upload File
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 };

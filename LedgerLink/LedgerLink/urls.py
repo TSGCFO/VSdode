@@ -1,9 +1,10 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from django.conf import settings
+from django.views.generic import TemplateView
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -42,7 +43,7 @@ api_patterns = [
     path('inserts/', include('inserts.urls')),
     path('materials/', include('materials.urls')),
     path('rules/', include('rules.urls')),
-    path('bulk-operations/', include('bulk_operations.urls')),  # Add bulk operations URLs
+    path('bulk-operations/', include('bulk_operations.urls')),
 ]
 
 urlpatterns = [
@@ -58,6 +59,9 @@ urlpatterns = [
         path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
         path('swagger.json', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     ])),
+
+    # Serve React app for all other routes
+    re_path(r'^.*$', TemplateView.as_view(template_name='index.html')),
 ]
 
 # Debug toolbar URLs (development only)
