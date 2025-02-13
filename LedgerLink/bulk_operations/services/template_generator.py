@@ -138,7 +138,6 @@ class CSVTemplateGenerator:
     @staticmethod
     def _get_order_fields() -> Dict[str, Dict[str, Any]]:
         return {
-            'transaction_id': {'type': 'integer', 'required': True},
             'customer': {'type': 'integer', 'required': True},
             'reference_number': {'type': 'string', 'required': True},
             'ship_to_name': {'type': 'string', 'required': True},
@@ -178,7 +177,15 @@ class CSVTemplateGenerator:
         return {
             'service_name': {'type': 'string', 'required': True},
             'description': {'type': 'string', 'required': False},
-            'charge_type': {'type': 'string', 'required': True},
+            'charge_type': {
+                'type': 'choice',
+                'required': True,
+                'choices': [
+                    ('single', 'Single Charge'),
+                    ('quantity', 'Quantity Based')
+                ],
+                'description': 'How the service is charged (single: Single Charge, quantity: Quantity Based)'
+            },
         }
 
     @staticmethod

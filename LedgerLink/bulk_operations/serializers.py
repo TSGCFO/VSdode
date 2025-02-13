@@ -121,7 +121,10 @@ class ProductBulkSerializer(BulkOperationBaseSerializer):
 class ServiceBulkSerializer(BulkOperationBaseSerializer):
     service_name = serializers.CharField(max_length=255)
     description = serializers.CharField(required=False, allow_blank=True)
-    charge_type = serializers.ChoiceField(choices=['fixed', 'hourly', 'per_unit'])
+    charge_type = serializers.ChoiceField(
+        choices=[('single', 'Single Charge'), ('quantity', 'Quantity Based')],
+        default='quantity'
+    )
 
     def create(self, validated_data):
         Service = apps.get_model('services', 'Service')

@@ -10,12 +10,19 @@ import {
   ListItemText,
   CircularProgress,
   Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from '@mui/material';
 import {
   CloudUpload as CloudUploadIcon,
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
   Description as FileIcon,
+  NavigateNext as NavigateNextIcon,
 } from '@mui/icons-material';
 
 const FileUploader = ({ selectedTemplate, onFileSelect, error }) => {
@@ -105,6 +112,40 @@ const FileUploader = ({ selectedTemplate, onFileSelect, error }) => {
     fileInputRef.current.click();
   };
 
+  const handleNext = () => {
+    // Trigger file validation
+    if (selectedFile) {
+      onFileSelect(selectedFile);
+    }
+  };
+
+  const getFieldDescription = (field, type) => {
+    if (selectedTemplate.type === 'services' && field === 'charge_type') {
+      return (
+        <Box>
+          <Typography variant="body2" color="text.primary">
+            Valid choices:
+          </Typography>
+          <List dense>
+            <ListItem>
+              <ListItemText 
+                primary="single"
+                secondary="Single Charge - One-time fixed charge"
+              />
+            </ListItem>
+            <ListItem>
+              <ListItemText 
+                primary="quantity"
+                secondary="Quantity Based - Charge based on quantity/units"
+              />
+            </ListItem>
+          </List>
+        </Box>
+      );
+    }
+    return type === 'choice' ? 'Choice field' : type;
+  };
+
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
@@ -119,6 +160,7 @@ const FileUploader = ({ selectedTemplate, onFileSelect, error }) => {
           bgcolor: dragActive ? 'action.hover' : 'background.paper',
           cursor: 'pointer',
           transition: 'all 0.2s ease',
+          mb: 3,
         }}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -199,24 +241,52 @@ const FileUploader = ({ selectedTemplate, onFileSelect, error }) => {
         </Alert>
       )}
 
-      <Box mt={2}>
-        <Typography variant="subtitle2" gutterBottom>
-          Required Fields:
+      <Box mt={3}>
+        <Typography variant="h6" gutterBottom>
+          Field Requirements
         </Typography>
-        <List dense>
-          {selectedTemplate.requiredFields.map((field) => (
-            <ListItem key={field}>
-              <ListItemIcon>
-                <CheckCircleIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText
-                primary={field}
-                secondary={selectedTemplate.fieldTypes[field]}
-              />
-            </ListItem>
-          ))}
-        </List>
+        <TableContainer component={Paper}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Field Name</TableCell>
+                <TableCell>Required</TableCell>
+                <TableCell>Type</TableCell>
+                <TableCell>Description</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {Object.entries(selectedTemplate.fieldTypes).map(([field, type]) => (
+                <TableRow key={field}>
+                  <TableCell>{field}</TableCell>
+                  <TableCell>
+                    {selectedTemplate.requiredFields.includes(field) ? (
+                      <CheckCircleIcon color="success" fontSize="small" />
+                    ) : 'Optional'}
+                  </TableCell>
+                  <TableCell>{type}</TableCell>
+                  <TableCell>
+                    {getFieldDescription(field, type)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Box>
+
+      {selectedFile && !clientValidationErrors.length && (
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+          <Button
+            variant="contained"
+            color="primary"
+            endIcon={<NavigateNextIcon />}
+            onClick={handleNext}
+          >
+            Next: Validate File
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 };

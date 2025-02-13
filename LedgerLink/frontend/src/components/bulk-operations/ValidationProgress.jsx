@@ -8,7 +8,6 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Collapse,
   Alert,
   CircularProgress,
 } from '@mui/material';
@@ -97,7 +96,7 @@ const ValidationProgress = ({ progress, errors, isProcessing }) => {
         {isProcessing && (
           <Box mb={2}>
             <Alert severity="info">
-              Validating file contents. This may take a few moments...
+              Validating file contents and processing data. This may take a few moments...
             </Alert>
           </Box>
         )}

@@ -1,23 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Paper,
   Typography,
-  Button,
   CircularProgress,
   Alert,
   Stepper,
   Step,
   StepLabel,
-  Grid,
-  Card,
-  CardContent,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
 } from '@mui/material';
-import { CloudUpload as CloudUploadIcon } from '@mui/icons-material';
 import TemplateSelector from './TemplateSelector';
 import FileUploader from './FileUploader';
 import ValidationProgress from './ValidationProgress';
@@ -71,25 +62,39 @@ const BulkOperations = () => {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
+      // Start progress simulation
+      const progressInterval = setInterval(() => {
+        setValidationProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 500);
+
       const response = await fetch(`/api/v1/bulk-operations/import/${selectedTemplate.type}/`, {
         method: 'POST',
         body: formData,
       });
 
+      clearInterval(progressInterval);
       const result = await response.json();
 
       if (result.success) {
         setImportSummary(result.import_summary);
+        setValidationProgress(100);
         setActiveStep(3);
       } else {
         setValidationErrors(result.errors || []);
         setError(result.error || 'Validation failed');
+        setValidationProgress(100);
       }
     } catch (err) {
       setError('Error processing file: ' + err.message);
+      setValidationProgress(100);
     } finally {
       setIsProcessing(false);
-      setValidationProgress(100);
     }
   };
 
