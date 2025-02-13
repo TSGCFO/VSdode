@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'customer_services.apps.CustomerServicesConfig',
     'rules',
     'materials.apps.MaterialsConfig',
+    'bulk_operations.apps.BulkOperationsConfig'
 ]
 
 MIDDLEWARE = [
@@ -125,6 +126,12 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',  # Required for file uploads
+    ],
+
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
@@ -316,4 +323,11 @@ LOGGING = {
             'propagate': False,
         },
     },
+}
+
+# Add to existing LOGGING configuration
+LOGGING['loggers']['bulk_operations'] = {
+    'handlers': ['console', 'file_debug', 'file_error'],
+    'level': 'DEBUG',
+    'propagate': False,
 }

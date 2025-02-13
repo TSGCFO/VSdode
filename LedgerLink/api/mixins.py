@@ -1,3 +1,4 @@
+import AuditLog
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
@@ -192,3 +193,45 @@ class BulkOperationsMixin:
         queryset = self.get_queryset()
         queryset.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+# api/mixins.py
+# Add this new mixin class
+
+class BulkOperationMixin:
+    """
+    Mixin to handle bulk operation functionality.
+    """
+    def get_bulk_operation_serializer(self, *args, **kwargs):
+        """
+        Return the serializer instance that should be used for bulk operations.
+        """
+        serializer_class = self.get_bulk_operation_serializer_class()
+        kwargs.setdefault('context', self.get_serializer_context())
+        return serializer_class(*args, **kwargs)
+
+    def get_bulk_operation_serializer_class(self):
+        """
+        Return the class to use for bulk operation serializer.
+        Defaults to using the regular serializer_class if not specified.
+        """
+        return getattr(self, 'bulk_operation_serializer_class', self.get_serializer_class())
+
+    def perform_bulk_operation(self, serializer):
+        """
+        Perform the bulk operation.
+        """
+        serializer.save()
+
+    def handle_bulk_exception(self, exc):
+        """
+        Handle any exception that occurs during bulk operations.
+        """
+        if isinstance(exc, ValidationError):
+            return Response(
+                {'detail': exc.detail},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return Response(
+            {'detail': str(exc)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

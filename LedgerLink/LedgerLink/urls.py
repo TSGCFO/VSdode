@@ -41,7 +41,8 @@ api_patterns = [
     path('shipping/', include('shipping.urls')),
     path('inserts/', include('inserts.urls')),
     path('materials/', include('materials.urls')),
-    path('rules/', include('rules.urls')),  # Add rules to API patterns
+    path('rules/', include('rules.urls')),
+    path('bulk-operations/', include('bulk_operations.urls')),  # Add bulk operations URLs
 ]
 
 urlpatterns = [

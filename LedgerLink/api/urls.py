@@ -55,6 +55,9 @@ urlpatterns = [
         path('billing/', include('api.v1.billing.urls')),
         path('services/', include('api.v1.services.urls')),
         path('shipping/', include('api.v1.shipping.urls')),
+
+        # Add bulk operations URLs
+        path('bulk-operations/', include('bulk_operations.urls')),
     ])),
 ]
 

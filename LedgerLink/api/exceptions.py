@@ -158,3 +158,19 @@ class ConflictError(APIError):
             status_code=status.HTTP_409_CONFLICT,
             details=details
         )
+
+# api/exceptions.py
+# Add these exception classes
+
+class BulkOperationError(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_detail = 'An error occurred during bulk operation.'
+    default_code = 'bulk_operation_error'
+
+class BulkValidationError(BulkOperationError):
+    default_detail = 'Validation failed for bulk operation.'
+    default_code = 'bulk_validation_error'
+
+class BulkFileError(BulkOperationError):
+    default_detail = 'Error processing bulk operation file.'
+    default_code = 'bulk_file_error'

@@ -199,3 +199,21 @@ DATE_FORMATS = {
     'DISPLAY_DATE': '%b %d, %Y',
     'DISPLAY_DATETIME': '%b %d, %Y %H:%M',
 }
+
+# api/constants.py
+# Add these constants
+
+BULK_OPERATION_STATUSES = {
+    'PENDING': 'pending',
+    'VALIDATING': 'validating',
+    'PROCESSING': 'processing',
+    'COMPLETED': 'completed',
+    'FAILED': 'failed',
+    'COMPLETED_WITH_ERRORS': 'completed_with_errors'
+}
+
+BULK_OPERATION_MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+
+SUPPORTED_FILE_FORMATS = ['csv', 'xlsx']
+
+BULK_OPERATION_CACHE_TIMEOUT = 3600  # 1 hour

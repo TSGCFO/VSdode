@@ -27,6 +27,7 @@ import {
   Rule as RuleIcon,
   Category as CategoryIcon,
   Inventory2 as Inventory2Icon,
+  CloudUpload as CloudUploadIcon,
 } from '@mui/icons-material';
 
 // Import our components
@@ -54,6 +55,7 @@ import MaterialList from './components/materials/MaterialList';
 import MaterialForm from './components/materials/MaterialForm';
 import BoxPriceList from './components/materials/BoxPriceList';
 import BoxPriceForm from './components/materials/BoxPriceForm';
+import BulkOperations from './components/bulk-operations/BulkOperations';
 
 // Create theme
 const theme = createTheme({
@@ -188,6 +190,12 @@ function App() {
                     </ListItemIcon>
                     <ListItemText primary="US Shipping" />
                   </ListItem>
+                  <ListItem button component={Link} to="/bulk-operations">
+                    <ListItemIcon>
+                      <CloudUploadIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="Bulk Operations" />
+                  </ListItem>
                 </List>
               </Box>
             </Drawer>
@@ -250,6 +258,7 @@ function App() {
                 <Route path="/shipping/us" element={<ProtectedRoute><USShippingList /></ProtectedRoute>} />
                 <Route path="/shipping/us/new" element={<ProtectedRoute><USShippingForm /></ProtectedRoute>} />
                 <Route path="/shipping/us/:id/edit" element={<ProtectedRoute><USShippingForm /></ProtectedRoute>} />
+                <Route path="/bulk-operations" element={<ProtectedRoute><BulkOperations /></ProtectedRoute>} />
               </Routes>
             </Container>
           </Box>
