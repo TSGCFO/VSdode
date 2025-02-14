@@ -16,12 +16,14 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
 } from '@mui/material';
 import {
   CloudUpload as CloudUploadIcon,
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
   Description as FileIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 
 const FileUploader = ({ selectedTemplate, onFileSelect, error }) => {
@@ -112,37 +114,8 @@ const FileUploader = ({ selectedTemplate, onFileSelect, error }) => {
   };
 
   const getFieldDescription = (field, type) => {
-    if (selectedTemplate.type === 'services' && field === 'charge_type') {
-      return (
-        <Box>
-          <Typography variant="body2" color="text.primary">
-            Valid choices:
-          </Typography>
-          <List dense>
-            <ListItem>
-              <ListItemText 
-                primary="single"
-                secondary="Single Charge - One-time fixed charge"
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemText 
-                primary="quantity"
-                secondary="Quantity Based - Charge based on quantity/units"
-              />
-            </ListItem>
-          </List>
-        </Box>
-      );
-    }
-
-    // Get field definition from template
     const fields = selectedTemplate.fields || {};
     const fieldDef = fields[field] || {};
-    
-    if (fieldDef.description) {
-      return fieldDef.description;
-    }
 
     if (type === 'choice' && fieldDef.choices) {
       return (
@@ -160,8 +133,37 @@ const FileUploader = ({ selectedTemplate, onFileSelect, error }) => {
               </ListItem>
             ))}
           </List>
+          {fieldDef.description && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              {fieldDef.description}
+            </Typography>
+          )}
         </Box>
       );
+    }
+
+    if (fieldDef.description) {
+      return fieldDef.description;
+    }
+
+    if (type === 'json') {
+      return 'JSON object (e.g., {"SKU1": 5, "SKU2": 3})';
+    }
+
+    if (type === 'datetime') {
+      return 'Date and time (YYYY-MM-DD HH:MM:SS)';
+    }
+
+    if (type === 'date') {
+      return 'Date (YYYY-MM-DD)';
+    }
+
+    if (type === 'decimal') {
+      return 'Decimal number';
+    }
+
+    if (type === 'integer') {
+      return 'Whole number';
     }
 
     return type;
@@ -287,7 +289,20 @@ const FileUploader = ({ selectedTemplate, onFileSelect, error }) => {
                   </TableCell>
                   <TableCell>{type}</TableCell>
                   <TableCell>
-                    {getFieldDescription(field, type)}
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                      <Typography variant="body2">
+                        {getFieldDescription(field, type)}
+                      </Typography>
+                      {selectedTemplate.fields?.[field]?.description && (
+                        <Tooltip title={selectedTemplate.fields[field].description}>
+                          <InfoIcon 
+                            color="info" 
+                            fontSize="small" 
+                            sx={{ ml: 1, cursor: 'help' }}
+                          />
+                        </Tooltip>
+                      )}
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))}

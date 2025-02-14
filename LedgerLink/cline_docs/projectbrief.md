@@ -12,6 +12,9 @@ LedgerLink is a modern web application built with Django REST Framework and Reac
   - Swagger/OpenAPI documentation
   - Modular app structure
   - Comprehensive test coverage
+  - Bulk data import processing
+  - Template-based validation
+  - Progress tracking system
 
 - **Frontend**:
   - Material UI components
@@ -20,3 +23,31 @@ LedgerLink is a modern web application built with Django REST Framework and Reac
   - Error handling
   - Responsive design
   - API client utility
+  - Multi-step workflows
+  - Progress indicators
+  - File upload system
+
+- **Bulk Operations**:
+  - Template-based data import
+  - Multiple file format support (CSV, XLSX, XLS)
+  - Real-time validation feedback
+  - Progress tracking
+  - Detailed error reporting
+  - Support for all major entities:
+    * Customers
+    * Orders
+    * Products
+    * Services
+    * Materials
+    * Inserts
+    * Shipping (US/CAD)
+
+- **Data Processing**:
+  - Client-side validation
+  - Server-side validation
+  - Business logic validation
+  - Error collection and reporting
+  - Default value handling
+  - NaN value processing
+  - Foreign key validation
+  - Choice field validation

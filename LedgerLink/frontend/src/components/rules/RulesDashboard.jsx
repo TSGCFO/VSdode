@@ -97,12 +97,17 @@ const RulesDashboard = () => {
 
   const handleGroupDelete = async (id) => {
     try {
+      setLoading(true);
       await rulesService.deleteRuleGroup(id);
-      await fetchRuleGroups();
+      const updatedGroups = await rulesService.getRuleGroups();
+      setRuleGroups(updatedGroups);
       setSelectedGroup(null);
+      setError(null);
     } catch (err) {
       setError('Failed to delete rule group. Please try again.');
       console.error('Error deleting rule group:', err);
+    } finally {
+      setLoading(false);
     }
   };
 

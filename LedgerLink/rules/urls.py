@@ -20,6 +20,7 @@ urlpatterns = [
     path('group/<int:group_id>/rule/create/api/', views.create_or_update_rule, name='api_create_rule'),
     path('rule/<int:pk>/edit/api/', views.create_or_update_rule, name='api_update_rule'),
     path('rule/<int:pk>/delete/api/', views.delete_rule, name='api_delete_rule'),
+    path('group/<int:pk>/delete/api/', views.delete_rule_group, name='api_delete_rule_group'),
     path('group/<int:group_id>/advanced-rules/', views.get_advanced_rules, name='get_advanced_rules'),
 
     # Rule Group URLs

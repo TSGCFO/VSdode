@@ -47,6 +47,26 @@ class CustomerServiceViewSet(viewsets.ModelViewSet):
         return queryset
 
     def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.get_queryset().select_related(
+                'customer',
+                'service'
+            )
+            serializer = self.get_serializer(queryset, many=True)
+            
+            response_data = {
+                'success': True,
+                'data': serializer.data
+            }
+            logger.info('Customer Services Response: %s', response_data)
+            return Response(response_data)
+        except Exception as e:
+            logger.error('Error in customer services list: %s', str(e))
+            return Response({
+                'success': False,
+                'error': 'Failed to fetch customer services',
+                'detail': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         """
         List customer services with optional filtering.
         """

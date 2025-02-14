@@ -37,56 +37,56 @@ const RuleGroupForm = ({ initialData, onSubmit, onCancel }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const fetchCustomerServices = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const services = await rulesService.getCustomerServices();
+        
+        if (services.length === 0) {
+          setError('No customer services available. Please create a customer service first.');
+        }
+        setCustomerServices(services);
+      } catch (error) {
+        console.error('Error fetching customer services:', error);
+        setError(error.message || 'Failed to load customer services');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchCustomerServices();
   }, []);
 
-  const fetchCustomerServices = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.customer_service) {
+      setError('Please select a customer service');
+      return;
+    }
     try {
-      setLoading(true);
-      setError(null);
-      const services = await rulesService.getCustomerServices();
-      console.log('Fetched customer services:', services);
-      if (!Array.isArray(services)) {
-        throw new Error('Invalid response format');
-      }
-      if (services.length === 0) {
-        setError('No customer services available. Please create a customer service first.');
-      }
-      setCustomerServices(services);
+      await onSubmit(formData);
     } catch (error) {
-      console.error('Error fetching customer services:', error);
-      setError(
-        error.message === 'Invalid response format'
-          ? 'Invalid data received from server'
-          : 'Failed to load customer services. Please try again.'
-      );
-      setCustomerServices([]);
-    } finally {
-      setLoading(false);
+      setError(error.message || 'Failed to save rule group');
     }
   };
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setFormData((prev) => ({
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: value
     }));
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    onSubmit(formData);
-  };
-
   return (
-    <Dialog open onClose={onCancel} fullWidth maxWidth="sm">
-      <DialogTitle>
-        {initialData ? 'Edit Rule Group' : 'Create Rule Group'}
-      </DialogTitle>
+    <Dialog open onClose={onCancel} maxWidth="sm" fullWidth>
       <form onSubmit={handleSubmit}>
+        <DialogTitle>
+          {initialData ? 'Edit Rule Group' : 'Create Rule Group'}
+        </DialogTitle>
         <DialogContent>
-          <Box display="flex" flexDirection="column" gap={2}>
+          <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
             {error && (
               <Alert severity="error" sx={{ mb: 2 }}>
                 {error}
@@ -139,24 +139,14 @@ const RuleGroupForm = ({ initialData, onSubmit, onCancel }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={onCancel}>Cancel</Button>
-          <Tooltip title={
-            loading ? 'Loading customer services...' :
-            error ? 'Please resolve the error to continue' :
-            customerServices.length === 0 ? 'No customer services available' :
-            !formData.customer_service ? 'Please select a customer service' :
-            ''
-          }>
-            <span>
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                disabled={!formData.customer_service || loading || customerServices.length === 0 || error}
-              >
-                {initialData ? 'Update' : 'Create'}
-              </Button>
-            </span>
-          </Tooltip>
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            disabled={!formData.customer_service || loading || customerServices.length === 0 || error}
+          >
+            {initialData ? 'Update' : 'Create'}
+          </Button>
         </DialogActions>
       </form>
     </Dialog>

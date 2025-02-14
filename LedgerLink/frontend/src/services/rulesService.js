@@ -377,8 +377,16 @@ const rulesService = {
   getCustomerServices: async () => {
     try {
       logDebug('getCustomerServices', 'Fetching customer services');
-      const services = await customerServiceApi.list();
-      logDebug('getCustomerServices', 'Customer services response:', services);
+      const response = await customerServiceApi.list();
+      logDebug('getCustomerServices', 'Customer services response:', response);
+      
+      // Handle both response formats (with and without success property)
+      const services = response.success ? response.data : response;
+      
+      if (!Array.isArray(services)) {
+        throw new Error('Invalid response format: expected array of customer services');
+      }
+      
       return services;
     } catch (error) {
       logError('getCustomerServices', 'Error fetching customer services:', error);

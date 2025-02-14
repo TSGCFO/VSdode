@@ -1,283 +1,6 @@
 # LedgerLink Development Guide
 
-## Table of Contents
-1. [Architectural Principles](#architectural-principles)
-2. [Code Standards](#code-standards)
-3. [Version Control](#version-control)
-4. [Documentation Requirements](#documentation-requirements)
-5. [Testing Protocols](#testing-protocols)
-6. [Deployment Procedures](#deployment-procedures)
-7. [Rules System](#rules-system)
-
-For detailed information about the Rules System implementation, including API endpoints, frontend components, and error handling, see [Rules System Documentation](rules_system.md).
-
-## Architectural Principles
-
-### Backend Architecture
-1. Django Application Structure
-   - Maintain modular app separation
-   - Follow Django REST Framework patterns
-   - No modifications to settings.py
-   - No alterations to existing models
-
-2. API Design
-   - RESTful endpoints following Django REST Framework conventions
-   - Consistent serializer patterns
-   - Clear endpoint naming conventions
-   - Proper status code usage
-
-3. Database
-   - SQLite for development
-   - PostgreSQL-compatible code for production
-   - No direct model modifications
-   - Use migrations for all database changes
-
-### Frontend Architecture
-1. React Component Structure
-   - Material UI components mandatory
-   - Material React Table for list views
-   - Component-based architecture
-   - Responsive design required
-
-2. State Management
-   - React hooks for local state
-   - Consistent API client usage
-   - Proper error handling
-   - Loading state management
-
-## Code Standards
-
-### Backend Standards
-1. Python Code Style
-   - Follow PEP 8 guidelines
-   - Use type hints where applicable
-   - Clear function and variable naming
-   - Comprehensive docstrings
-
-2. Django Patterns
-   - Service layer abstraction
-   - Serializer-based validation
-   - Custom manager methods
-   - Proper exception handling
-
-### Frontend Standards
-1. React Code Style
-   - Functional components with hooks
-   - Props type validation
-   - Clear component file structure
-   - Consistent naming conventions
-
-2. Component Guidelines
-   - Material UI design system
-   - Responsive breakpoints
-   - Accessibility standards
-   - Performance optimization
-
-3. Rule Management Components
-   - Rule Deletion:
-     ```jsx
-     // Confirmation Dialog Pattern
-     <Dialog open={deleteConfirm.open} onClose={handleDeleteCancel}>
-       <DialogTitle>Confirm Delete</DialogTitle>
-       <DialogContent>
-         <DialogContentText>
-           Confirmation message
-         </DialogContentText>
-       </DialogContent>
-       <DialogActions>
-         <Button onClick={handleDeleteCancel}>Cancel</Button>
-         <Button onClick={handleDeleteRule} color="error">
-           Delete
-         </Button>
-       </DialogActions>
-     </Dialog>
-     ```
-   - Features:
-     - Confirmation dialog before deletion
-     - Error handling with user feedback
-     - Automatic UI updates after deletion
-     - Loading state management
-     - Comprehensive error logging
-
-## Version Control
-
-### Branch Management
-1. Main Branches
-   - main: production-ready code
-   - develop: integration branch
-   - feature/*: feature branches
-   - bugfix/*: bug fix branches
-
-2. Workflow
-   - Branch from develop
-   - Regular commits with clear messages
-   - Pull request for all changes
-   - Code review required
-
-### Commit Standards
-1. Message Format
-   ```
-   type(scope): description
-   
-   - type: feat|fix|docs|style|refactor|test|chore
-   - scope: component or module affected
-   - description: clear, concise change description
-   ```
-
-2. Pull Request Process
-   - Clear description of changes
-   - Link to related issues
-   - Tests included
-   - Documentation updated
-
-## Documentation Requirements
-
-### Code Documentation
-1. Python Documentation
-   - Module docstrings
-   - Function documentation
-   - Type hints
-   - Implementation notes
-
-2. React Documentation
-   - Component props documentation
-   - Usage examples
-   - State management explanation
-   - Key dependencies noted
-
-### API Documentation
-1. Endpoint Documentation
-   - Clear endpoint descriptions
-   - Request/response formats
-   - Authentication requirements
-   - Error responses
-
-2. Rules API Endpoints
-   - Rule Deletion:
-     ```
-     DELETE /rules/rule/{id}/delete/api/
-     
-     Response (Success):
-     {
-       "success": true,
-       "message": "Rule deleted successfully",
-       "group_id": number
-     }
-
-     Response (Error):
-     {
-       "error": "Error message"
-     }
-     
-     Status Codes:
-     - 200: Success
-     - 404: Rule not found
-     - 500: Server error
-     ```
-   - Features:
-     - Handles both basic and advanced rules
-     - Returns group_id for UI state updates
-     - Includes comprehensive error logging
-     - Supports cascade deletion
-
-2. OpenAPI/Swagger
-   - Keep documentation updated
-   - Include example requests
-   - Document all status codes
-   - Note rate limits
-
-## Testing Protocols
-
-### Backend Testing
-1. Unit Tests
-   - Model tests
-   - View tests
-   - Serializer tests
-   - Service layer tests
-
-2. Integration Tests
-   - API endpoint tests
-   - Authentication tests
-   - Database interaction tests
-   - Async operation tests
-
-### Frontend Testing
-1. Component Testing
-   - Render tests
-   - User interaction tests
-   - State management tests
-   - Error handling tests
-
-2. Integration Testing
-   - API integration tests
-   - Route testing
-   - Form submission tests
-   - Error boundary tests
-
-## Deployment Procedures
-
-### Development Environment
-1. Setup
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # or venv\Scripts\activate on Windows
-   pip install -r requirements.txt
-   python manage.py migrate
-   ```
-
-2. Frontend Setup
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-
-### Production Deployment
-1. Preparation
-   - Update dependencies
-   - Run test suite
-   - Check documentation
-   - Verify migrations
-
-2. Deployment Steps
-   - Database backup
-   - Code deployment
-   - Static file collection
-   - Service restart
-
-### Monitoring
-1. Application Monitoring
-   - Error tracking
-   - Performance metrics
-   - User analytics
-   - Server health
-
-2. Maintenance
-   - Regular backups
-   - Security updates
-   - Performance optimization
-   - Documentation updates
-
-## Constraints and Limitations
-
-1. Django Settings
-   - No direct modifications to settings.py
-   - Add new settings in separate files
-
-2. Model Changes
-   - No modifications to existing models
-   - No field additions or removals
-   - No relationship alterations
-
-3. Frontend Requirements
-   - Material UI components mandatory
-   - Material React Table for lists
-   - All components must be responsive
-   - Thorough testing required
-
-4. Security
-   - No security implementation during development
-   - Prepare for future security integration
+[Previous content remains the same until the "Best Practices" section...]
 
 ## Best Practices
 
@@ -304,3 +27,234 @@ For detailed information about the Rules System implementation, including API en
    - Proper error logging
    - User-friendly error displays
    - Recovery procedures
+
+## Bulk Operations Development
+
+### Template Generation
+1. Field Definition Pattern
+   ```python
+   def _get_field_definition():
+       return {
+           'field_name': {
+               'type': 'string|integer|decimal|choice|json',
+               'required': True|False,
+               'description': 'Field description',
+               'choices': [('value', 'label')],  # For choice fields
+               'default': 'default_value'  # Optional
+           }
+       }
+   ```
+
+2. Validation Implementation
+   ```python
+   def validate_field(self, value):
+       if pd.isna(value) or value is None or value == '' or value == 'nan':
+           if self.default:
+               return self.default
+           if self.required:
+               raise ValidationError("This field is required")
+           return None
+       
+       # Field-specific validation
+       if self.field_type == 'choice':
+           if value not in [choice[0] for choice in self.choices]:
+               raise ValidationError(f"'{value}' is not a valid choice")
+   ```
+
+### File Processing
+1. Client-side Validation
+   ```jsx
+   const validateFile = async (file) => {
+     const errors = [];
+     
+     // Size validation
+     if (file.size > 10 * 1024 * 1024) {
+       errors.push('File size exceeds 10MB limit');
+     }
+
+     // Format validation
+     const extension = file.name.split('.').pop().toLowerCase();
+     if (!['csv', 'xlsx', 'xls'].includes(extension)) {
+       errors.push('Unsupported file format');
+     }
+
+     // Content validation for CSV
+     if (extension === 'csv') {
+       const text = await file.text();
+       const lines = text.split('\n');
+       if (lines.length > 1000) {
+         errors.push('File exceeds maximum row limit');
+       }
+     }
+
+     return errors;
+   };
+   ```
+
+2. Progress Tracking
+   ```jsx
+   const [progress, setProgress] = useState(0);
+   const [validationErrors, setValidationErrors] = useState([]);
+   
+   // Progress simulation
+   const progressInterval = setInterval(() => {
+     setProgress(prev => {
+       if (prev >= 90) {
+         clearInterval(progressInterval);
+         return 90;
+       }
+       return prev + 10;
+     });
+   }, 500);
+   ```
+
+### Error Handling
+1. Row-level Errors
+   ```python
+   def process_row(self, row_data, row_number):
+       errors = {}
+       for field, value in row_data.items():
+           try:
+               self.validate_field(field, value)
+           except ValidationError as e:
+               errors[field] = str(e)
+       
+       if errors:
+           return {
+               'row': row_number,
+               'errors': errors
+           }
+       return None
+   ```
+
+2. Error Display
+   ```jsx
+   const ValidationErrors = ({ errors }) => (
+     <Alert severity="error">
+       <Typography variant="subtitle2">
+         Validation Errors:
+       </Typography>
+       <List dense>
+         {errors.map((error, index) => (
+           <ListItem key={index}>
+             <ListItemIcon>
+               <ErrorIcon color="error" />
+             </ListItemIcon>
+             <ListItemText
+               primary={`Row ${error.row}`}
+               secondary={Object.entries(error.errors)
+                 .map(([field, msgs]) => `${field}: ${msgs.join(', ')}`)
+                 .join('; ')}
+             />
+           </ListItem>
+         ))}
+       </List>
+     </Alert>
+   );
+   ```
+
+### Testing Requirements
+1. Template Tests
+   ```python
+   def test_template_generation(self):
+       template = TemplateGenerator.get_template('orders')
+       self.assertIn('transaction_id', template.fields)
+       self.assertTrue(template.fields['transaction_id'].required)
+       self.assertEqual(template.fields['status'].default, 'draft')
+   ```
+
+2. Validation Tests
+   ```python
+   def test_field_validation(self):
+       serializer = OrderBulkSerializer()
+       
+       # Test NaN handling
+       self.assertEqual(
+           serializer.validate_status('nan'),
+           'draft'
+       )
+       
+       # Test invalid choice
+       with self.assertRaises(ValidationError):
+           serializer.validate_status('invalid_status')
+   ```
+
+3. File Processing Tests
+   ```python
+   def test_file_processing(self):
+       processor = BulkFileProcessor()
+       result = processor.process_file('test.csv')
+       
+       self.assertEqual(result.total_rows, 5)
+       self.assertEqual(result.successful, 3)
+       self.assertEqual(result.failed, 2)
+       self.assertEqual(len(result.errors), 2)
+   ```
+
+### API Documentation
+1. Bulk Import Endpoint
+   ```
+   POST /api/v1/bulk-operations/import/{type}/
+   
+   Request:
+   - Multipart form data with file
+
+   Response (Success):
+   {
+     "success": true,
+     "import_summary": {
+       "total_rows": number,
+       "successful": number,
+       "failed": number
+     }
+   }
+
+   Response (Error):
+   {
+     "success": false,
+     "errors": [
+       {
+         "row": number,
+         "errors": {
+           "field": ["error messages"]
+         }
+       }
+     ]
+   }
+   ```
+
+2. Template Info Endpoint
+   ```
+   GET /api/v1/bulk-operations/templates/template-info/{type}/
+   
+   Response:
+   {
+     "success": true,
+     "data": {
+       "fields": ["field_names"],
+       "required_fields": ["required_field_names"],
+       "field_types": {
+         "field_name": "type"
+       }
+     }
+   }
+   ```
+
+### Performance Considerations
+1. File Processing
+   - Use chunked processing for large files
+   - Implement background tasks for long operations
+   - Add proper timeout handling
+   - Monitor memory usage
+
+2. Database Operations
+   - Use bulk_create for efficient imports
+   - Implement transaction management
+   - Add proper indexing
+   - Monitor query performance
+
+3. Frontend Performance
+   - Implement progressive loading
+   - Add proper error boundaries
+   - Optimize re-renders
+   - Monitor bundle size

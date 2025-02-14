@@ -152,7 +152,11 @@ class CSVTemplateGenerator:
             'ship_to_country': {'type': 'string', 'required': False},
             'weight_lb': {'type': 'decimal', 'required': False, 'description': 'Weight in pounds'},
             'line_items': {'type': 'integer', 'required': False, 'description': 'Number of line items'},
-            'sku_quantity': {'type': 'json', 'required': False, 'description': 'JSON object mapping SKUs to quantities'},
+            'sku_quantity': {
+                'type': 'json',
+                'required': False,
+                'description': 'JSON object mapping SKUs to quantities, e.g., {"SKU1": 5, "SKU2": 3}. Leave empty if not applicable.'
+            },
             'total_item_qty': {'type': 'integer', 'required': False, 'description': 'Total quantity of all items'},
             'volume_cuft': {'type': 'decimal', 'required': False, 'description': 'Volume in cubic feet'},
             'packages': {'type': 'integer', 'required': False, 'description': 'Number of packages'},
@@ -169,7 +173,7 @@ class CSVTemplateGenerator:
                     ('cancelled', 'Cancelled')
                 ],
                 'default': 'draft',
-                'description': 'Order status'
+                'description': 'Order status (draft, submitted, shipped, delivered, cancelled). Defaults to draft if empty.'
             },
             'priority': {
                 'type': 'choice',
@@ -180,7 +184,7 @@ class CSVTemplateGenerator:
                     ('high', 'High')
                 ],
                 'default': 'medium',
-                'description': 'Order priority'
+                'description': 'Order priority (low, medium, high). Defaults to medium if empty.'
             },
         }
 

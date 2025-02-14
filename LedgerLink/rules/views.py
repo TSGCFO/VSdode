@@ -29,6 +29,41 @@ from customer_services.models import CustomerService
 
 logger = logging.getLogger(__name__)
 
+# API endpoints for rule group operations
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_rule_group(request, pk):
+    """Delete a rule group via API"""
+    try:
+        rule_group = get_object_or_404(RuleGroup, id=pk)
+        
+        # Log deletion attempt
+        logger.info(f"Attempting to delete rule group {pk}")
+        
+        # Perform deletion
+        rule_group.delete()
+        
+        # Log successful deletion
+        logger.info(f"Rule group {pk} deleted successfully")
+        
+        return Response({
+            'success': True,
+            'message': 'Rule group deleted successfully'
+        })
+        
+    except RuleGroup.DoesNotExist:
+        logger.error(f"Rule group {pk} not found")
+        return Response(
+            {'error': 'Rule group not found'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        logger.error(f"Error deleting rule group {pk}: {str(e)}")
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
 # Add new API endpoint for rule deletion
 @api_view(['DELETE'])
 @permission_classes([AllowAny])

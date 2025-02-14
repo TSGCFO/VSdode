@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -72,14 +72,39 @@ const RuleGroupsList = ({ groups, onSelect, onUpdate, onDelete, onCreateNew }) =
     onSelect(row.original);
   };
 
+  const [tableData, setTableData] = useState(groups || []);
+
+  useEffect(() => {
+    setTableData(groups || []);
+  }, [groups]);
+
+  const [rowSelection, setRowSelection] = useState({});
+
+  useEffect(() => {
+    setRowSelection({});
+  }, [tableData]);
+
   const table = useMaterialReactTable({
     columns,
-    data: groups || [],
+    data: tableData,
     enableRowActions: true,
     positionActionsColumn: 'last',
     muiTableContainerProps: { sx: { maxHeight: '500px' } },
     enableColumnResizing: true,
     columnResizeMode: "onChange",
+    enablePagination: true,
+    manualPagination: false,
+    autoResetPageIndex: true,
+    state: {
+      rowSelection,
+    },
+    onRowSelectionChange: setRowSelection,
+    enableRowSelection: false,
+    displayColumnDefOptions: {
+      'mrt-row-actions': {
+        size: 120,
+      },
+    },
     muiTableProps: {
       sx: {
         tableLayout: 'auto',

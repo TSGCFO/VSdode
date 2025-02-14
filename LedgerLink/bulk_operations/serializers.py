@@ -3,6 +3,8 @@ from rest_framework import serializers
 from django.apps import apps
 import json
 from decimal import Decimal
+import pandas as pd
+import numpy as np
 
 
 class BulkImportResponseSerializer(serializers.Serializer):
@@ -49,7 +51,7 @@ class CustomerBulkSerializer(BulkOperationBaseSerializer):
 class OrderBulkSerializer(BulkOperationBaseSerializer):
     transaction_id = serializers.IntegerField()  # Primary key, externally assigned
     customer = serializers.IntegerField()
-    close_date = serializers.DateTimeField(required=False)
+    close_date = serializers.DateTimeField(required=False, allow_null=True)
     reference_number = serializers.CharField(max_length=50)
     ship_to_name = serializers.CharField(max_length=255)
     ship_to_company = serializers.CharField(max_length=255, required=False, allow_blank=True)
@@ -59,22 +61,26 @@ class OrderBulkSerializer(BulkOperationBaseSerializer):
     ship_to_state = serializers.CharField(max_length=100)
     ship_to_zip = serializers.CharField(max_length=20)
     ship_to_country = serializers.CharField(max_length=100, required=False, allow_blank=True)
-    weight_lb = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
-    line_items = serializers.IntegerField(required=False)
-    sku_quantity = serializers.JSONField(required=False)
-    total_item_qty = serializers.IntegerField(required=False)
-    volume_cuft = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
-    packages = serializers.IntegerField(required=False)
-    notes = serializers.CharField(required=False, allow_blank=True)
-    carrier = serializers.CharField(max_length=50, required=False, allow_blank=True)
+    weight_lb = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, allow_null=True)
+    line_items = serializers.IntegerField(required=False, allow_null=True)
+    sku_quantity = serializers.JSONField(required=False, allow_null=True)
+    total_item_qty = serializers.IntegerField(required=False, allow_null=True)
+    volume_cuft = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, allow_null=True)
+    packages = serializers.IntegerField(required=False, allow_null=True)
+    notes = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    carrier = serializers.CharField(max_length=50, required=False, allow_blank=True, allow_null=True)
     status = serializers.ChoiceField(
         choices=['draft', 'submitted', 'shipped', 'delivered', 'cancelled'],
         required=False,
+        allow_blank=True,
+        allow_null=True,
         default='draft'
     )
     priority = serializers.ChoiceField(
         choices=['low', 'medium', 'high'],
         required=False,
+        allow_blank=True,
+        allow_null=True,
         default='medium'
     )
 
@@ -83,6 +89,9 @@ class OrderBulkSerializer(BulkOperationBaseSerializer):
         return self.validate_foreign_key(value, Customer)
 
     def validate_sku_quantity(self, value):
+        if pd.isna(value) or value is None or value == '' or value == 'nan':
+            return None
+
         if isinstance(value, str):
             try:
                 value = json.loads(value)
@@ -95,6 +104,16 @@ class OrderBulkSerializer(BulkOperationBaseSerializer):
         for sku, qty in value.items():
             if not isinstance(qty, (int, float)) or qty <= 0:
                 raise serializers.ValidationError(f"Invalid quantity for SKU {sku}: {qty}")
+        return value
+
+    def validate_status(self, value):
+        if pd.isna(value) or value is None or value == '' or value == 'nan' or isinstance(value, float):
+            return 'draft'
+        return value
+
+    def validate_priority(self, value):
+        if pd.isna(value) or value is None or value == '' or value == 'nan' or isinstance(value, float):
+            return 'medium'
         return value
 
     def create(self, validated_data):

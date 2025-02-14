@@ -158,7 +158,7 @@ export const rulesApi = {
     method: 'PUT',
     body: JSON.stringify(data),
   }),
-  deleteGroup: (id) => request(`/rules/group/${id}/delete/`, {
+  deleteGroup: (id) => request(`/rules/group/${id}/delete/api/`, {
     method: 'DELETE',
   }),
 
@@ -385,30 +385,6 @@ export const insertApi = {
 };
 
 /**
- * CAD Shipping API endpoints
- */
-export const cadShippingApi = {
-  list: (params = {}) => {
-    const queryParams = new URLSearchParams();
-    if (params.search) queryParams.append('search', params.search);
-    const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
-    return request(`/shipping/cad/${query}`);
-  },
-  get: (id) => request(`/shipping/cad/${id}/`),
-  create: (data) => request('/shipping/cad/', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
-  update: (id, data) => request(`/shipping/cad/${id}/`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  }),
-  delete: (id) => request(`/shipping/cad/${id}/`, {
-    method: 'DELETE',
-  }),
-};
-
-/**
  * US Shipping API endpoints
  */
 export const usShippingApi = {
@@ -430,6 +406,34 @@ export const usShippingApi = {
   delete: (id) => request(`/shipping/us/${id}/`, {
     method: 'DELETE',
   }),
+  // Add missing methods
+  getStatuses: () => request('/shipping/us/statuses/'),
+};
+
+/**
+ * CAD Shipping API endpoints
+ */
+export const cadShippingApi = {
+  list: (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.search) queryParams.append('search', params.search);
+    const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
+    return request(`/shipping/cad/${query}`);
+  },
+  get: (id) => request(`/shipping/cad/${id}/`),
+  create: (data) => request('/shipping/cad/', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  update: (id, data) => request(`/shipping/cad/${id}/`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }),
+  delete: (id) => request(`/shipping/cad/${id}/`, {
+    method: 'DELETE',
+  }),
+  // Add missing method
+  getCarriers: () => request('/shipping/cad/carriers/'),
 };
 
 export const handleApiError = (error) => {
