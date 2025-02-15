@@ -1,0 +1,71 @@
+RuleGroupsList.jsx:111  Uncaught ReferenceError: setRowSelection is not defined
+    at RuleGroupsList (RuleGroupsList.jsx:111:27)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (react-dom.development.js:20103:13)
+    at beginWork (react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback2 (react-dom.development.js:4164:14)
+    at Object.invokeGuardedCallbackDev (react-dom.development.js:4213:16)
+    at invokeGuardedCallback (react-dom.development.js:4277:31)
+    at beginWork$1 (react-dom.development.js:27490:7)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+    at workLoopSync (react-dom.development.js:26505:5)
+RuleGroupsList.jsx:111  Uncaught ReferenceError: setRowSelection is not defined
+    at RuleGroupsList (RuleGroupsList.jsx:111:27)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (react-dom.development.js:20103:13)
+    at beginWork (react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback2 (react-dom.development.js:4164:14)
+    at Object.invokeGuardedCallbackDev (react-dom.development.js:4213:16)
+    at invokeGuardedCallback (react-dom.development.js:4277:31)
+    at beginWork$1 (react-dom.development.js:27490:7)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+    at workLoopSync (react-dom.development.js:26505:5)
+hook.js:608  The above error occurred in the <RuleGroupsList> component:
+
+    at RuleGroupsList (http://localhost:5175/src/components/rules/RuleGroupsList.jsx?t=1739631675487:33:27)
+    at div
+    at http://localhost:5175/node_modules/.vite/deps/chunk-Q3OV6WKI.js?v=34bc46d5:3463:50
+    at Box3 (http://localhost:5175/node_modules/.vite/deps/chunk-D5CUOAOE.js?v=34bc46d5:816:19)
+    at div
+    at http://localhost:5175/node_modules/.vite/deps/chunk-Q3OV6WKI.js?v=34bc46d5:3463:50
+    at Container3 (http://localhost:5175/node_modules/.vite/deps/chunk-D5CUOAOE.js?v=34bc46d5:2133:19)
+    at RulesDashboard (http://localhost:5175/src/components/rules/RulesDashboard.jsx?t=1739631675487:36:37)
+    at div
+    at http://localhost:5175/node_modules/.vite/deps/chunk-Q3OV6WKI.js?v=34bc46d5:3463:50
+    at Box3 (http://localhost:5175/node_modules/.vite/deps/chunk-D5CUOAOE.js?v=34bc46d5:816:19)
+    at RulesManagement
+    at ProtectedRoute (http://localhost:5175/src/components/auth/ProtectedRoute.jsx:17:27)
+    at RenderedRoute (http://localhost:5175/node_modules/.vite/deps/react-router-dom.js?v=34bc46d5:4088:5)
+    at Routes (http://localhost:5175/node_modules/.vite/deps/react-router-dom.js?v=34bc46d5:4558:5)
+    at div
+    at http://localhost:5175/node_modules/.vite/deps/chunk-Q3OV6WKI.js?v=34bc46d5:3463:50
+    at Container3 (http://localhost:5175/node_modules/.vite/deps/chunk-D5CUOAOE.js?v=34bc46d5:2133:19)
+    at main
+    at http://localhost:5175/node_modules/.vite/deps/chunk-Q3OV6WKI.js?v=34bc46d5:3463:50
+    at Box3 (http://localhost:5175/node_modules/.vite/deps/chunk-D5CUOAOE.js?v=34bc46d5:816:19)
+    at div
+    at http://localhost:5175/node_modules/.vite/deps/chunk-Q3OV6WKI.js?v=34bc46d5:3463:50
+    at Box3 (http://localhost:5175/node_modules/.vite/deps/chunk-D5CUOAOE.js?v=34bc46d5:816:19)
+    at Router (http://localhost:5175/node_modules/.vite/deps/react-router-dom.js?v=34bc46d5:4501:15)
+    at BrowserRouter (http://localhost:5175/node_modules/.vite/deps/react-router-dom.js?v=34bc46d5:5247:5)
+    at DefaultPropsProvider (http://localhost:5175/node_modules/.vite/deps/chunk-Q3OV6WKI.js?v=34bc46d5:8912:3)
+    at RtlProvider (http://localhost:5175/node_modules/.vite/deps/chunk-D5CUOAOE.js?v=34bc46d5:1189:5)
+    at ThemeProvider (http://localhost:5175/node_modules/.vite/deps/chunk-D5CUOAOE.js?v=34bc46d5:1139:15)
+    at ThemeProvider2 (http://localhost:5175/node_modules/.vite/deps/chunk-D5CUOAOE.js?v=34bc46d5:1229:15)
+    at ThemeProvider3 (http://localhost:5175/node_modules/.vite/deps/chunk-D5CUOAOE.js?v=34bc46d5:3323:12)
+    at App (http://localhost:5175/src/App.jsx?t=1739631675487:87:45)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+overrideMethod @ hook.js:608
+react-dom.development.js:26962  Uncaught ReferenceError: setRowSelection is not defined
+    at RuleGroupsList (RuleGroupsList.jsx:111:27)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (react-dom.development.js:20103:13)
+    at beginWork (react-dom.development.js:21626:16)
+    at beginWork$1 (react-dom.development.js:27465:14)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+    at workLoopSync (react-dom.development.js:26505:5)
+    at renderRootSync (react-dom.development.js:26473:7)
+    at recoverFromConcurrentError (react-dom.development.js:25889:20)
+    at performConcurrentWorkOnRoot (react-dom.development.js:25789:22)

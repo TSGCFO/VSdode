@@ -169,3 +169,4 @@ const RulesDashboard = () => {
 };
 
 export default RulesDashboard;
+
