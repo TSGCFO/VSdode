@@ -1,0 +1,97 @@
+# Project Instructions
+
+## Django Backend Rules
+1. Django Settings Management:
+   - Do not modify the existing Django settings.py file
+   - New settings can be added, but must be appended to the existing configuration
+   - Create a local_settings.py file for environment-specific configurations
+
+2. Model Constraints:
+   - Existing Django models are strictly read-only
+   - No modifications allowed to:
+     * Field additions or removals
+     * Field type changes
+     * Model relationships
+     * Model meta options
+   - When model changes are requested:
+     a. Inform the user about the model constraint
+     b. Ask: "Should we make an exception to the constraints in this case, or would you prefer an alternative approach?"
+     c. Wait for user direction before proceeding
+
+3. Backend Development:
+   - No modifications to existing backend logic
+   - No implementation of authentication systems
+   - No security features during development phase
+   - API endpoints should remain as defined
+
+## Frontend Development Guidelines
+1. Project Structure:
+   - All frontend components must be in the /frontend directory
+   - Follow a consistent component organization pattern
+   - Maintain separation of concerns
+
+2. UI Framework Requirements:
+   - Primary: Material UI (MUI) components
+   - Tables: Material React Table for all list views
+   - Rules App Exception:
+     * Can use alternative Material UI components
+     * Freedom to use other component libraries
+     * Must maintain consistent styling
+
+3. Component Requirements:
+   - List Views:
+     * Display all model fields in table format
+     * Implement sorting and filtering
+     * Include pagination
+     * Responsive design for all screen sizes
+   
+   - Form Views:
+     * Include validation
+     * Proper error handling
+     * Responsive layout
+     * Clear success/error feedback
+
+4. Responsive Design:
+   - Must work on all devices (mobile, tablet, desktop)
+   - Breakpoints:
+     * Mobile: 320px - 480px
+     * Tablet: 481px - 768px
+     * Desktop: 769px+
+   - No horizontal scrolling on any screen size
+   - Readable text at all viewport sizes
+
+5. Testing Requirements:
+   - Test all components in development environment
+   - Cross-browser testing
+   - Responsive design testing
+   - Functionality testing:
+     * Data loading
+     * Form submissions
+     * Error handling
+     * UI interactions
+
+6. Performance Considerations:
+   - Optimize component rendering
+   - Implement proper loading states
+   - Handle data fetching efficiently
+   - Minimize unnecessary re-renders
+
+## Development Workflow
+1. Component Development:
+   - Create components based on model analysis
+   - Ensure proper data flow
+   - Implement error boundaries
+   - Add loading states
+
+2. Testing Process:
+   - Run development server
+   - Test all CRUD operations
+   - Verify responsive design
+   - Check error handling
+   - Validate data display
+
+3. Documentation:
+   - Comment code appropriately
+   - Document component props
+   - Include setup instructions
+   - Note any special considerations

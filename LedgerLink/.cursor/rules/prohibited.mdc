@@ -1,0 +1,18 @@
+---
+description: Django models
+globs: 
+---
+
+# Django Model Constraints
+
+
+   - Existing Django models are strictly read-only
+   - No modifications allowed to:
+     * Field additions or removals
+     * Field type changes
+     * Model relationships
+     * Model meta options
+   - When model changes are requested:
+     a. Inform the user about the model constraint
+     b. Ask: "Should we make an exception to the constraints in this case, or would you prefer an alternative approach?"
+     c. Wait for user direction before proceeding

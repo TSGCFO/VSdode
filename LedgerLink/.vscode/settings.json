@@ -10,5 +10,6 @@
             "username": "postgres",
             "password": ""
         }
-    ]
+    ],
+    "python.analysis.autoImportCompletions": true
 }

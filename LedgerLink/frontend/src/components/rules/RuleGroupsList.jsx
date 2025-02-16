@@ -97,12 +97,14 @@ const RuleGroupsList = ({ groups, onSelect, onUpdate, onDelete, onCreateNew }) =
     autoResetPageIndex: true,
     state: {
       rowSelection,
+      isLoading: !groups
     },
     onRowSelectionChange: setRowSelection,
     enableRowSelection: false,
     displayColumnDefOptions: {
       'mrt-row-actions': {
-        size: 120,
+        header: 'Actions',
+        size: 120
       },
     },
     muiTableProps: {
@@ -149,9 +151,6 @@ const RuleGroupsList = ({ groups, onSelect, onUpdate, onDelete, onCreateNew }) =
       sorting: [{ id: 'customer_service.name', desc: false }],
       pagination: { pageSize: 10 },
     },
-    state: {
-      isLoading: !groups,
-    },
     muiTablePaperProps: {
       elevation: 0,
       sx: {
@@ -163,12 +162,6 @@ const RuleGroupsList = ({ groups, onSelect, onUpdate, onDelete, onCreateNew }) =
       sx: {
         fontWeight: 'bold',
         backgroundColor: '#f5f5f5',
-      },
-    },
-    displayColumnDefOptions: {
-      'mrt-row-actions': {
-        header: 'Actions',
-        size: 100,
       },
     },
   });

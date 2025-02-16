@@ -22,9 +22,9 @@ class BulkImportValidator:
         Returns True if validation passes, False otherwise.
         """
         try:
-            from .template_generator import CSVTemplateGenerator
-            definition = CSVTemplateGenerator.get_template_definition(self.template_type)
-            field_types = CSVTemplateGenerator.get_field_types(self.template_type)
+            from .template_generator import ExcelTemplateGenerator
+            definition = ExcelTemplateGenerator.get_template_definition(self.template_type)
+            field_types = ExcelTemplateGenerator.get_field_types(self.template_type)
 
             # Validate required fields
             self._validate_required_fields(definition['required_fields'])
@@ -65,33 +65,58 @@ class BulkImportValidator:
                         'error': f"Required field '{field}' is empty"
                     })
 
-    def _validate_data_types(self, field_types: Dict[str, str]):
+    def _validate_data_types(self, field_types: Dict[str, Dict[str, Any]]):
         """
         Validate data types for each field.
         """
-        for field, field_type in field_types.items():
+        for field, field_info in field_types.items():
             if field not in self.data.columns:
                 continue
 
+            field_type = field_info['type']
             for idx, value in self.data[field].items():
                 if pd.isnull(value):
                     continue
 
+                # Convert value to string for type checking
+                str_value = str(value)
+
                 try:
                     if field_type == 'integer':
-                        pd.to_numeric(value, downcast='integer')
+                        int(str_value)
                     elif field_type == 'decimal':
-                        pd.to_numeric(value, downcast='float')
+                        float(str_value)
                     elif field_type == 'boolean':
-                        pd.to_numeric(value, downcast='boolean')
+                        if str_value.lower() not in ('true', 'false', '0', '1'):
+                            raise ValueError("Value must be a boolean")
                     elif field_type in ('date', 'datetime'):
-                        pd.to_datetime(value)
-                except:
+                        pd.to_datetime(str_value)
+                    elif field_type == 'choice' and field_info.get('choices'):
+                        valid_choices = [str(choice[0]) for choice in field_info['choices']]
+                        if str_value not in valid_choices:
+                            raise ValueError(f"Value must be one of: {', '.join(valid_choices)}")
+                    elif field_type == 'string':
+                        # All values can be converted to strings, so no need for additional validation
+                        pass
+                    elif field_type == 'email':
+                        if '@' not in str_value or '.' not in str_value:
+                            raise ValueError("Invalid email format")
+                except Exception as e:
                     self.errors.append({
                         'row': idx + 2,
                         'field': field,
-                        'error': f"Invalid {field_type} value: {value}"
+                        'error': f"Invalid {field_type} value: {value}. {str(e)}"
                     })
+
+                # Validate max length for string fields
+                if field_type in ('string', 'email') and field_info.get('max_length'):
+                    max_length = field_info['max_length']
+                    if len(str_value) > max_length:
+                        self.errors.append({
+                            'row': idx + 2,
+                            'field': field,
+                            'error': f"Value exceeds maximum length of {max_length} characters"
+                        })
 
     def _validate_foreign_keys(self, field_types: Dict[str, str]):
         """
@@ -101,7 +126,7 @@ class BulkImportValidator:
             if field_type != 'foreign_key' or field not in self.data.columns:
                 continue
 
-            model_name = CSVTemplateGenerator.get_template_definition(self.template_type)['model']
+            model_name = ExcelTemplateGenerator.get_template_definition(self.template_type)['model']
             model = apps.get_model(model_name)
             related_model = model._meta.get_field(field).remote_field.model
 

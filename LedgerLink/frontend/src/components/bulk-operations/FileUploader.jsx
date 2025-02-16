@@ -17,6 +17,12 @@ import {
   TableHead,
   TableRow,
   Tooltip,
+  Chip,
+  Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   CloudUpload as CloudUploadIcon,
@@ -24,6 +30,7 @@ import {
   Error as ErrorIcon,
   Description as FileIcon,
   Info as InfoIcon,
+  Download as DownloadIcon,
 } from '@mui/icons-material';
 
 const FileUploader = ({ selectedTemplate, onFileSelect, error }) => {
@@ -31,6 +38,7 @@ const FileUploader = ({ selectedTemplate, onFileSelect, error }) => {
   const [validating, setValidating] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [clientValidationErrors, setClientValidationErrors] = useState([]);
+  const [showTemplateInfo, setShowTemplateInfo] = useState(false);
   const fileInputRef = useRef(null);
 
   const validateFile = async (file) => {
@@ -45,32 +53,8 @@ const FileUploader = ({ selectedTemplate, onFileSelect, error }) => {
 
     // Format validation
     const extension = file.name.split('.').pop().toLowerCase();
-    if (!['csv', 'xlsx', 'xls'].includes(extension)) {
-      errors.push('Unsupported file format. Please use CSV or Excel files.');
-    }
-
-    // Basic content validation for CSV files
-    if (extension === 'csv') {
-      try {
-        const text = await file.text();
-        const lines = text.split('\n');
-        if (lines.length > 1000) {
-          errors.push('File exceeds maximum row limit of 1000');
-        }
-
-        // Header validation
-        if (lines.length > 0) {
-          const headers = lines[0].split(',').map(h => h.trim());
-          const missingRequired = selectedTemplate.requiredFields.filter(
-            field => !headers.includes(field)
-          );
-          if (missingRequired.length > 0) {
-            errors.push(`Missing required columns: ${missingRequired.join(', ')}`);
-          }
-        }
-      } catch (err) {
-        errors.push('Error reading file content');
-      }
+    if (extension !== 'xlsx') {
+      errors.push('Please use the Excel template provided (.xlsx format)');
     }
 
     setValidating(false);
@@ -113,67 +97,63 @@ const FileUploader = ({ selectedTemplate, onFileSelect, error }) => {
     fileInputRef.current.click();
   };
 
-  const getFieldDescription = (field, type) => {
-    const fields = selectedTemplate.fields || {};
-    const fieldDef = fields[field] || {};
+  const handleDownloadTemplate = async () => {
+    try {
+      const response = await fetch(`/api/v1/bulk-operations/download/${selectedTemplate.type}/`);
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to download template');
+      }
 
-    if (type === 'choice' && fieldDef.choices) {
-      return (
-        <Box>
-          <Typography variant="body2" color="text.primary">
-            Valid choices:
-          </Typography>
-          <List dense>
-            {fieldDef.choices.map(([value, label]) => (
-              <ListItem key={value}>
-                <ListItemText 
-                  primary={value}
-                  secondary={label}
-                />
-              </ListItem>
-            ))}
-          </List>
-          {fieldDef.description && (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              {fieldDef.description}
-            </Typography>
-          )}
-        </Box>
-      );
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${selectedTemplate.type}_template.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Error downloading template:', err);
     }
-
-    if (fieldDef.description) {
-      return fieldDef.description;
-    }
-
-    if (type === 'json') {
-      return 'JSON object (e.g., {"SKU1": 5, "SKU2": 3})';
-    }
-
-    if (type === 'datetime') {
-      return 'Date and time (YYYY-MM-DD HH:MM:SS)';
-    }
-
-    if (type === 'date') {
-      return 'Date (YYYY-MM-DD)';
-    }
-
-    if (type === 'decimal') {
-      return 'Decimal number';
-    }
-
-    if (type === 'integer') {
-      return 'Whole number';
-    }
-
-    return type;
   };
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        Upload {selectedTemplate.name} File
-      </Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h6">
+          Upload {selectedTemplate.name} File
+        </Typography>
+        <Button
+          variant="outlined"
+          startIcon={<DownloadIcon />}
+          onClick={handleDownloadTemplate}
+        >
+          Download Template
+        </Button>
+      </Box>
+
+      <Alert severity="info" sx={{ mb: 3 }}>
+        <Typography variant="subtitle2" gutterBottom>
+          Template Features:
+        </Typography>
+        <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+          {selectedTemplate.features && Object.entries(selectedTemplate.features).map(([feature, enabled]) => (
+            enabled && (
+              <Chip
+                key={feature}
+                size="small"
+                icon={<CheckCircleIcon />}
+                label={feature.replace(/([A-Z])/g, ' $1').trim()}
+                color="primary"
+                variant="outlined"
+              />
+            )
+          ))}
+        </Stack>
+      </Alert>
 
       <Paper
         sx={{
@@ -194,7 +174,7 @@ const FileUploader = ({ selectedTemplate, onFileSelect, error }) => {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".csv,.xlsx,.xls"
+          accept=".xlsx"
           onChange={handleChange}
           style={{ display: 'none' }}
         />
@@ -218,7 +198,11 @@ const FileUploader = ({ selectedTemplate, onFileSelect, error }) => {
           </Typography>
 
           <Typography variant="body2" color="text.secondary">
-            Supported formats: CSV, XLSX, XLS (Max 10MB)
+            Excel files only (.xlsx) - Max 10MB
+          </Typography>
+
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Please use the template provided for correct data structure and validation
           </Typography>
         </Box>
       </Paper>
@@ -249,7 +233,7 @@ const FileUploader = ({ selectedTemplate, onFileSelect, error }) => {
             {clientValidationErrors.map((error, index) => (
               <ListItem key={index}>
                 <ListItemIcon>
-                  <ErrorIcon color="error" fontSize="small" />
+                  <ErrorIcon color="error" />
                 </ListItemIcon>
                 <ListItemText primary={error} />
               </ListItem>
@@ -265,63 +249,36 @@ const FileUploader = ({ selectedTemplate, onFileSelect, error }) => {
       )}
 
       <Box mt={3}>
-        <Typography variant="h6" gutterBottom>
-          Field Requirements
+        <Typography variant="subtitle2" gutterBottom>
+          Important Notes:
         </Typography>
-        <TableContainer component={Paper}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Field Name</TableCell>
-                <TableCell>Required</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell>Description</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {Object.entries(selectedTemplate.fieldTypes).map(([field, type]) => (
-                <TableRow key={field}>
-                  <TableCell>{field}</TableCell>
-                  <TableCell>
-                    {selectedTemplate.requiredFields.includes(field) ? (
-                      <CheckCircleIcon color="success" fontSize="small" />
-                    ) : 'Optional'}
-                  </TableCell>
-                  <TableCell>{type}</TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                      <Typography variant="body2">
-                        {getFieldDescription(field, type)}
-                      </Typography>
-                      {selectedTemplate.fields?.[field]?.description && (
-                        <Tooltip title={selectedTemplate.fields[field].description}>
-                          <InfoIcon 
-                            color="info" 
-                            fontSize="small" 
-                            sx={{ ml: 1, cursor: 'help' }}
-                          />
-                        </Tooltip>
-                      )}
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <List dense>
+          <ListItem>
+            <ListItemIcon>
+              <InfoIcon color="info" />
+            </ListItemIcon>
+            <ListItemText primary="Use the provided Excel template for correct data structure" />
+          </ListItem>
+          <ListItem>
+            <ListItemIcon>
+              <InfoIcon color="info" />
+            </ListItemIcon>
+            <ListItemText primary="The template includes data validation and sample data" />
+          </ListItem>
+          <ListItem>
+            <ListItemIcon>
+              <InfoIcon color="info" />
+            </ListItemIcon>
+            <ListItemText primary="Required fields are marked with an asterisk (*)" />
+          </ListItem>
+          <ListItem>
+            <ListItemIcon>
+              <InfoIcon color="info" />
+            </ListItemIcon>
+            <ListItemText primary="Maximum 1000 rows per import" />
+          </ListItem>
+        </List>
       </Box>
-
-      {selectedFile && !clientValidationErrors.length && (
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => onFileSelect(selectedFile)}
-          >
-            Next: Validate File
-          </Button>
-        </Box>
-      )}
     </Box>
   );
 };

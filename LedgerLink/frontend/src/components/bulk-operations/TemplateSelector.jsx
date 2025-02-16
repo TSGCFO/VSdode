@@ -9,11 +9,25 @@ import {
   Tooltip,
   CircularProgress,
   Alert,
+  Chip,
+  Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
 } from '@mui/material';
 import {
   Download as DownloadIcon,
   Info as InfoIcon,
   NavigateNext as NavigateNextIcon,
+  Check as CheckIcon,
 } from '@mui/icons-material';
 
 const TemplateSelector = ({ onSelect }) => {
@@ -21,6 +35,8 @@ const TemplateSelector = ({ onSelect }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [templateInfo, setTemplateInfo] = useState(null);
+  const [showTemplateInfo, setShowTemplateInfo] = useState(false);
 
   useEffect(() => {
     fetchTemplates();
@@ -28,7 +44,7 @@ const TemplateSelector = ({ onSelect }) => {
 
   const fetchTemplates = async () => {
     try {
-      const response = await fetch('/api/v1/bulk-operations/templates/');
+      const response = await fetch('/api/v1/bulk-operations/operations/');
       const result = await response.json();
 
       if (result.success) {
@@ -46,7 +62,7 @@ const TemplateSelector = ({ onSelect }) => {
   const handleTemplateSelect = async (template) => {
     try {
       // Fetch template info before selection
-      const response = await fetch(`/api/v1/bulk-operations/templates/template-info/${template.type}/`);
+      const response = await fetch(`/api/v1/bulk-operations/operations/template-info/${template.type}/`);
       const result = await response.json();
 
       if (result.success) {
@@ -55,8 +71,11 @@ const TemplateSelector = ({ onSelect }) => {
           fields: result.data.fields,
           requiredFields: result.data.requiredFields,
           fieldTypes: result.data.fieldTypes,
+          validationRules: result.data.validationRules,
+          features: result.data.features,
         };
         setSelectedTemplate(templateWithInfo);
+        setTemplateInfo(result.data);
       } else {
         setError(result.error || 'Failed to fetch template information');
       }
@@ -68,7 +87,7 @@ const TemplateSelector = ({ onSelect }) => {
   const handleDownloadTemplate = async (templateType, event) => {
     event.stopPropagation();
     try {
-      const response = await fetch(`/api/v1/bulk-operations/templates/${templateType}/download/`);
+      const response = await fetch(`/api/v1/bulk-operations/download/${templateType}/`);
       
       if (!response.ok) {
         const error = await response.json();
@@ -80,7 +99,7 @@ const TemplateSelector = ({ onSelect }) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${templateType}_template.csv`;
+      a.download = `${templateType}_template.xlsx`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -94,6 +113,11 @@ const TemplateSelector = ({ onSelect }) => {
     if (selectedTemplate) {
       onSelect(selectedTemplate);
     }
+  };
+
+  const handleShowInfo = (template, event) => {
+    event.stopPropagation();
+    setShowTemplateInfo(true);
   };
 
   if (loading) {
@@ -136,24 +160,50 @@ const TemplateSelector = ({ onSelect }) => {
                   <Typography variant="h6" component="div">
                     {template.name}
                   </Typography>
-                  <Tooltip title="Download Template">
-                    <Button
-                      size="small"
-                      startIcon={<DownloadIcon />}
-                      onClick={(e) => handleDownloadTemplate(template.type, e)}
-                    >
-                      Template
-                    </Button>
-                  </Tooltip>
+                  <Stack direction="row" spacing={1}>
+                    <Tooltip title="View Template Information">
+                      <Button
+                        size="small"
+                        startIcon={<InfoIcon />}
+                        onClick={(e) => handleShowInfo(template, e)}
+                      >
+                        Info
+                      </Button>
+                    </Tooltip>
+                    <Tooltip title="Download Excel Template">
+                      <Button
+                        size="small"
+                        startIcon={<DownloadIcon />}
+                        onClick={(e) => handleDownloadTemplate(template.type, e)}
+                      >
+                        Template
+                      </Button>
+                    </Tooltip>
+                  </Stack>
                 </Box>
                 <Typography color="text.secondary" sx={{ mt: 1 }}>
                   {template.description}
                 </Typography>
-                {template.fieldCount && (
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                    {template.fieldCount} fields
-                  </Typography>
-                )}
+                <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+                  {template.sample_data && (
+                    <Chip
+                      size="small"
+                      icon={<CheckIcon />}
+                      label="Sample Data"
+                      color="primary"
+                      variant="outlined"
+                    />
+                  )}
+                  {template.validation_enabled && (
+                    <Chip
+                      size="small"
+                      icon={<CheckIcon />}
+                      label="Data Validation"
+                      color="primary"
+                      variant="outlined"
+                    />
+                  )}
+                </Stack>
               </CardContent>
             </Card>
           </Grid>
@@ -172,6 +222,85 @@ const TemplateSelector = ({ onSelect }) => {
           </Button>
         </Box>
       )}
+
+      {/* Template Info Dialog */}
+      <Dialog
+        open={showTemplateInfo}
+        onClose={() => setShowTemplateInfo(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          {selectedTemplate?.name} Template Information
+        </DialogTitle>
+        <DialogContent>
+          {templateInfo && (
+            <>
+              <Typography variant="subtitle1" gutterBottom>
+                Features
+              </Typography>
+              <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+                {Object.entries(templateInfo.features).map(([feature, enabled]) => (
+                  enabled && (
+                    <Chip
+                      key={feature}
+                      size="small"
+                      icon={<CheckIcon />}
+                      label={feature.replace(/([A-Z])/g, ' $1').trim()}
+                      color="primary"
+                      variant="outlined"
+                    />
+                  )
+                ))}
+              </Stack>
+
+              <Typography variant="subtitle1" gutterBottom>
+                Field Details
+              </Typography>
+              <TableContainer component={Paper} sx={{ mb: 2 }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Field Name</TableCell>
+                      <TableCell>Type</TableCell>
+                      <TableCell>Required</TableCell>
+                      <TableCell>Description</TableCell>
+                      <TableCell>Validation</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {Object.entries(templateInfo.validationRules).map(([field, info]) => (
+                      <TableRow key={field}>
+                        <TableCell>{field}</TableCell>
+                        <TableCell>{info.type}</TableCell>
+                        <TableCell>{info.required ? 'Yes' : 'No'}</TableCell>
+                        <TableCell>{info.description}</TableCell>
+                        <TableCell>
+                          {info.validation && Object.entries(info.validation).map(([key, value]) => (
+                            <Typography key={key} variant="caption" display="block">
+                              {key}: {Array.isArray(value) ? value.join(', ') : value}
+                            </Typography>
+                          ))}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowTemplateInfo(false)}>Close</Button>
+          <Button
+            variant="contained"
+            startIcon={<DownloadIcon />}
+            onClick={(e) => handleDownloadTemplate(selectedTemplate?.type, e)}
+          >
+            Download Template
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

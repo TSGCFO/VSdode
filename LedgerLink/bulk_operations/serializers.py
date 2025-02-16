@@ -5,6 +5,7 @@ import json
 from decimal import Decimal
 import pandas as pd
 import numpy as np
+from .models import BulkImportLog
 
 
 class BulkImportResponseSerializer(serializers.Serializer):
@@ -294,3 +295,60 @@ class BulkSerializerFactory:
         if not serializer_class:
             raise KeyError(f"No serializer found for template type: {template_type}")
         return serializer_class
+
+
+class BulkImportListSerializer(serializers.ModelSerializer):
+    """
+    Serializer for bulk import list view.
+    """
+    user = serializers.StringRelatedField()
+    duration = serializers.DurationField(read_only=True)
+    success_rate = serializers.FloatField(read_only=True)
+
+    class Meta:
+        model = BulkImportLog
+        fields = [
+            'id',
+            'template_type',
+            'file_name',
+            'total_rows',
+            'successful_rows',
+            'failed_rows',
+            'status',
+            'started_at',
+            'completed_at',
+            'duration',
+            'success_rate',
+            'user',
+        ]
+        read_only_fields = fields
+
+
+class BulkImportDetailSerializer(serializers.ModelSerializer):
+    """
+    Serializer for bulk import detail view.
+    """
+    user = serializers.StringRelatedField()
+    duration = serializers.DurationField(read_only=True)
+    success_rate = serializers.FloatField(read_only=True)
+
+    class Meta:
+        model = BulkImportLog
+        fields = [
+            'id',
+            'template_type',
+            'file_name',
+            'file_size',
+            'total_rows',
+            'successful_rows',
+            'failed_rows',
+            'status',
+            'errors',
+            'started_at',
+            'completed_at',
+            'duration',
+            'success_rate',
+            'user',
+            'ip_address',
+        ]
+        read_only_fields = fields

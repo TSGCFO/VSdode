@@ -10,44 +10,105 @@ import {
   ListItemText,
   Alert,
   CircularProgress,
+  Chip,
+  Stack,
+  Divider,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
 import {
   Error as ErrorIcon,
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
+  ExpandMore as ExpandMoreIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 
-const ValidationProgress = ({ progress, errors, isProcessing }) => {
+const ValidationProgress = ({ progress, errors, isProcessing, validationStage }) => {
   const getStatusColor = () => {
     if (isProcessing) return 'primary';
     return errors.length > 0 ? 'error' : 'success';
   };
 
   const getStatusText = () => {
-    if (isProcessing) return 'Validating...';
+    if (isProcessing) {
+      switch (validationStage) {
+        case 'structure':
+          return 'Validating template structure...';
+        case 'data':
+          return 'Validating data...';
+        case 'processing':
+          return 'Processing records...';
+        default:
+          return 'Validating...';
+      }
+    }
     return errors.length > 0 ? 'Validation Failed' : 'Validation Complete';
   };
 
+  const getStageProgress = () => {
+    switch (validationStage) {
+      case 'structure':
+        return Math.min(progress, 30);
+      case 'data':
+        return 30 + Math.min(progress * 0.4, 40);
+      case 'processing':
+        return 70 + Math.min(progress * 0.3, 30);
+      default:
+        return progress;
+    }
+  };
+
   const renderError = (error, index) => {
-    const errorDetails = typeof error === 'string' 
-      ? { message: error } 
-      : {
-          row: error.row,
-          message: Object.entries(error.errors)
-            .map(([field, errors]) => `${field}: ${errors.join(', ')}`)
-            .join('; '),
-        };
+    if (typeof error === 'string') {
+      return (
+        <ListItem key={index}>
+          <ListItemIcon>
+            <ErrorIcon color="error" />
+          </ListItemIcon>
+          <ListItemText primary={error} />
+        </ListItem>
+      );
+    }
+
+    const { row, errors: errorDetails } = error;
+    const hasMultipleErrors = Object.keys(errorDetails).length > 1;
 
     return (
-      <ListItem key={index}>
-        <ListItemIcon>
-          <ErrorIcon color="error" />
-        </ListItemIcon>
-        <ListItemText
-          primary={errorDetails.row ? `Row ${errorDetails.row}` : 'Error'}
-          secondary={errorDetails.message}
-        />
-      </ListItem>
+      <Accordion key={index} sx={{ width: '100%' }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Box display="flex" alignItems="center" width="100%">
+            <ErrorIcon color="error" sx={{ mr: 1 }} />
+            <Typography>Row {row}</Typography>
+            <Box ml="auto">
+              <Chip
+                size="small"
+                label={`${Object.keys(errorDetails).length} ${
+                  hasMultipleErrors ? 'errors' : 'error'
+                }`}
+                color="error"
+                variant="outlined"
+              />
+            </Box>
+          </Box>
+        </AccordionSummary>
+        <AccordionDetails>
+          <List dense>
+            {Object.entries(errorDetails).map(([field, fieldErrors], fieldIndex) => (
+              <ListItem key={fieldIndex}>
+                <ListItemIcon>
+                  <InfoIcon color="info" fontSize="small" />
+                </ListItemIcon>
+                <ListItemText
+                  primary={field}
+                  secondary={Array.isArray(fieldErrors) ? fieldErrors.join(', ') : fieldErrors}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </AccordionDetails>
+      </Accordion>
     );
   };
 
@@ -75,16 +136,47 @@ const ValidationProgress = ({ progress, errors, isProcessing }) => {
           </Typography>
         </Box>
 
-        <LinearProgress
-          variant="determinate"
-          value={progress}
-          color={getStatusColor()}
-          sx={{ mb: 2, height: 8, borderRadius: 4 }}
-        />
+        <Stack spacing={2} sx={{ mb: 3 }}>
+          <Box>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Template Structure
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={validationStage === 'structure' ? progress : 100}
+              color={validationStage === 'structure' ? 'primary' : 'success'}
+              sx={{ height: 8, borderRadius: 4 }}
+            />
+          </Box>
+
+          <Box>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Data Validation
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={validationStage === 'data' ? progress : (validationStage === 'processing' ? 100 : 0)}
+              color={validationStage === 'data' ? 'primary' : 'success'}
+              sx={{ height: 8, borderRadius: 4 }}
+            />
+          </Box>
+
+          <Box>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Processing
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={validationStage === 'processing' ? progress : 0}
+              color={validationStage === 'processing' ? 'primary' : 'success'}
+              sx={{ height: 8, borderRadius: 4 }}
+            />
+          </Box>
+        </Stack>
 
         <Box display="flex" justifyContent="space-between" mb={2}>
           <Typography variant="body2" color="text.secondary">
-            {progress}% Complete
+            Overall Progress: {getStageProgress()}%
           </Typography>
           {errors.length > 0 && (
             <Typography variant="body2" color="error">
@@ -96,7 +188,9 @@ const ValidationProgress = ({ progress, errors, isProcessing }) => {
         {isProcessing && (
           <Box mb={2}>
             <Alert severity="info">
-              Validating file contents and processing data. This may take a few moments...
+              {validationStage === 'structure' && 'Validating template structure and checking required fields...'}
+              {validationStage === 'data' && 'Validating data formats and field constraints...'}
+              {validationStage === 'processing' && 'Processing records and saving to database...'}
             </Alert>
           </Box>
         )}
@@ -106,20 +200,21 @@ const ValidationProgress = ({ progress, errors, isProcessing }) => {
             <Typography variant="subtitle2" gutterBottom color="error">
               Validation Errors:
             </Typography>
-            <Paper variant="outlined" sx={{ maxHeight: 300, overflow: 'auto' }}>
-              <List dense>
+            <Paper variant="outlined" sx={{ maxHeight: 400, overflow: 'auto' }}>
+              <List dense disablePadding>
                 {errors.map((error, index) => renderError(error, index))}
               </List>
             </Paper>
             <Alert severity="warning" sx={{ mt: 2 }}>
-              Please correct these errors and try uploading again.
+              Please correct these errors in the Excel template and try uploading again.
+              Make sure to use the data validation features in Excel to prevent common errors.
             </Alert>
           </Box>
         )}
 
         {!isProcessing && errors.length === 0 && progress === 100 && (
           <Alert severity="success">
-            File validation successful. Processing data...
+            Validation successful! All data meets the required format and constraints.
           </Alert>
         )}
       </Paper>
