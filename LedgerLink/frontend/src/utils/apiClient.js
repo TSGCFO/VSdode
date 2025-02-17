@@ -1,5 +1,6 @@
 import { getAccessToken, refreshAccessToken, logout } from './auth';
 import logger from './logger';
+import axios from 'axios';
 
 const API_BASE_URL = '/api/v1';
 
@@ -436,6 +437,71 @@ export const cadShippingApi = {
   getCarriers: () => request('/shipping/cad/carriers/'),
 };
 
+export const billingApi = {
+  generateReport: async (params) => {
+    try {
+      const response = await request('/billing/api/generate-report/', {
+        method: 'POST',
+        body: JSON.stringify(params),
+      }, true);
+
+      // Since request() already parses the JSON, we don't need to parse it again
+      if (!response || !response.success) {
+        throw new Error(response?.error || 'Failed to generate report');
+      }
+
+      return {
+        success: true,
+        report: response.report
+      };
+    } catch (error) {
+      // If it's already an error object with our expected structure, just rethrow it
+      if (error.status && error.message) {
+        throw error;
+      }
+      // Otherwise wrap it in our error structure
+      throw {
+        status: error.status || 500,
+        message: error.message || 'An unexpected error occurred',
+        originalError: error
+      };
+    }
+  },
+
+  exportReport: async (params, config = {}) => {
+    try {
+      const token = getAccessToken();
+      const csrfToken = getCookie('csrftoken');
+
+      const response = await fetch(`${API_BASE_URL}/billing/api/generate-report/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
+        body: JSON.stringify(params),
+        ...config,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Export failed');
+        }
+        throw new Error('Export failed');
+      }
+
+      return response;
+    } catch (error) {
+      console.error('Error exporting report:', error);
+      throw error;
+    }
+  }
+};
+
 export const handleApiError = (error) => {
   if (!error) {
     logger.error('Unknown API error', { error: 'No error object provided' });
@@ -493,5 +559,6 @@ export default {
   cadShippingApi,
   usShippingApi,
   rulesApi,
+  billingApi,
   handleApiError,
 };

@@ -116,3 +116,5 @@ wheel
 djangorestframework
 celery
 django-filter
+
+pip install openpyxl reportlab

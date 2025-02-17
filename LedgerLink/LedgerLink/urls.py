@@ -48,7 +48,6 @@ api_patterns = [
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('billing/', include('billing.urls')),
     
     # API endpoints
     path('api/v1/', include(api_patterns)),

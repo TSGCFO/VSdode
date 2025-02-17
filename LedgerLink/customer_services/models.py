@@ -27,7 +27,24 @@ class CustomerService(models.Model):
     def get_sku_list(self):
         """Get a list of SKU codes associated with this customer service."""
         return list(self.skus.values_list('sku', flat=True))
-    
+
+    @property
+    def normalized_skus(self):
+        """Returns normalized list of assigned SKUs"""
+        return [sku.strip().upper() for sku in self.get_sku_list()]
+
+    @property
+    def billing_type(self):
+        """Returns the billing type based on service name"""
+        service_name = self.service.service_name.lower()
+        if 'pick cost' in service_name:
+            return 'pick'
+        elif 'case pick' in service_name:
+            return 'case'
+        elif 'sku cost' in service_name:
+            return 'sku'
+        return 'standard'
+
 class CustomerServiceView(models.Model):
     id = models.IntegerField(primary_key=True)  # Keep ID for reference
     customer_service = models.CharField(max_length=255)  # Stores "Customer - Service"

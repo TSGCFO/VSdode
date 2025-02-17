@@ -77,17 +77,31 @@ const logger = {
         status: response.status,
         statusText: response.statusText,
         headers: Object.fromEntries(response.headers.entries()),
-        data
+        data: typeof data === 'object' ? data : { raw: data }
       };
-      logger[level === LOG_LEVELS.DEBUG ? 'debug' : 'error'](
-        `API Response: ${method} ${url}`,
-        responseData
-      );
+      
+      if (!response.ok) {
+        logger.error(
+          `API Error Response: ${method} ${url} (${response.status})`,
+          responseData
+        );
+      } else {
+        logger.debug(
+          `API Success Response: ${method} ${url}`,
+          responseData
+        );
+      }
     }
   },
 
   logApiError: (method, url, error) => {
-    logger.error(`API Error: ${method} ${url}`, error);
+    const errorData = {
+      message: error.message,
+      status: error.status,
+      data: error.data,
+      stack: error.stack,
+    };
+    logger.error(`API Error: ${method} ${url}`, errorData);
   }
 };
 

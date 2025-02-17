@@ -6,5 +6,5 @@ from .models import Service
 
 @admin.register(Service)
 class ServiceAdmin(admin.ModelAdmin):
-    list_display = ('service_name', 'description', 'created_at', 'updated_at')
+    list_display = ('service_name', 'description', 'charge_type', 'created_at', 'updated_at')
     search_fields = ('service_name',)

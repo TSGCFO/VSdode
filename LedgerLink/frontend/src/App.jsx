@@ -15,6 +15,8 @@ import {
   ThemeProvider,
   createTheme,
 } from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import {
   People as PeopleIcon,
   Dashboard as DashboardIcon,
@@ -28,6 +30,7 @@ import {
   Category as CategoryIcon,
   Inventory2 as Inventory2Icon,
   CloudUpload as CloudUploadIcon,
+  Receipt as ReceiptIcon,
 } from '@mui/icons-material';
 
 // Import our components
@@ -56,6 +59,7 @@ import MaterialForm from './components/materials/MaterialForm';
 import BoxPriceList from './components/materials/BoxPriceList';
 import BoxPriceForm from './components/materials/BoxPriceForm';
 import BulkOperations from './components/bulk-operations/BulkOperations';
+import BillingReport from './components/billing/BillingReport';
 
 // Create theme
 const theme = createTheme({
@@ -65,6 +69,18 @@ const theme = createTheme({
     },
     secondary: {
       main: '#dc004e',
+    },
+  },
+  components: {
+    MuiTextField: {
+      defaultProps: {
+        size: 'small',
+      },
+    },
+    MuiButton: {
+      defaultProps: {
+        size: 'small',
+      },
     },
   },
 });
@@ -89,181 +105,190 @@ function App() {
 
   return (
     <ThemeProvider theme={theme}>
-      <Router>
-        <Box sx={{ display: 'flex' }}>
-          <CssBaseline />
-          
-          {/* App Bar */}
-          <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-            <Toolbar>
-              <Typography variant="h6" noWrap component="div">
-                LedgerLink
-              </Typography>
-            </Toolbar>
-          </AppBar>
+      <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <Router>
+          <Box sx={{ display: 'flex' }}>
+            <CssBaseline />
+            
+            {/* App Bar */}
+            <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+              <Toolbar>
+                <Typography variant="h6" noWrap component="div">
+                  LedgerLink
+                </Typography>
+              </Toolbar>
+            </AppBar>
 
-          {/* Sidebar - Only show when authenticated */}
-          {authenticated && (
-            <Drawer
-              variant="permanent"
-              sx={{
-                width: drawerWidth,
-                flexShrink: 0,
-                '& .MuiDrawer-paper': {
+            {/* Sidebar - Only show when authenticated */}
+            {authenticated && (
+              <Drawer
+                variant="permanent"
+                sx={{
                   width: drawerWidth,
-                  boxSizing: 'border-box',
-                },
+                  flexShrink: 0,
+                  '& .MuiDrawer-paper': {
+                    width: drawerWidth,
+                    boxSizing: 'border-box',
+                  },
+                }}
+              >
+                <Toolbar /> {/* This creates space for the AppBar */}
+                <Box sx={{ overflow: 'auto' }}>
+                  <List>
+                    <ListItem button component={Link} to="/">
+                      <ListItemIcon>
+                        <DashboardIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="Dashboard" />
+                    </ListItem>
+                    <ListItem button component={Link} to="/customers">
+                      <ListItemIcon>
+                        <PeopleIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="Customers" />
+                    </ListItem>
+                    <ListItem button component={Link} to="/customer-services">
+                      <ListItemIcon>
+                        <BusinessCenterIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="Customer Services" />
+                    </ListItem>
+                    <ListItem button component={Link} to="/services">
+                      <ListItemIcon>
+                        <BuildIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="Services" />
+                    </ListItem>
+                    <ListItem button component={Link} to="/orders">
+                      <ListItemIcon>
+                        <ShoppingCartIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="Orders" />
+                    </ListItem>
+                    <ListItem button component={Link} to="/products">
+                      <ListItemIcon>
+                        <InventoryIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="Products" />
+                    </ListItem>
+                    <ListItem button component={Link} to="/materials">
+                      <ListItemIcon>
+                        <CategoryIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="Materials" />
+                    </ListItem>
+                    <ListItem button component={Link} to="/box-prices">
+                      <ListItemIcon>
+                        <Inventory2Icon />
+                      </ListItemIcon>
+                      <ListItemText primary="Box Prices" />
+                    </ListItem>
+                    <ListItem button component={Link} to="/inserts">
+                      <ListItemIcon>
+                        <DescriptionIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="Inserts" />
+                    </ListItem>
+                    <ListItem button component={Link} to="/rules">
+                      <ListItemIcon>
+                        <RuleIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="Rules" />
+                    </ListItem>
+                    <ListItem button component={Link} to="/shipping/cad">
+                      <ListItemIcon>
+                        <LocalShippingIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="CAD Shipping" />
+                    </ListItem>
+                    <ListItem button component={Link} to="/shipping/us">
+                      <ListItemIcon>
+                        <LocalShippingIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="US Shipping" />
+                    </ListItem>
+                    <ListItem button component={Link} to="/bulk-operations">
+                      <ListItemIcon>
+                        <CloudUploadIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="Bulk Operations" />
+                    </ListItem>
+                    <ListItem button component={Link} to="/billing">
+                      <ListItemIcon>
+                        <ReceiptIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="Billing" />
+                    </ListItem>
+                  </List>
+                </Box>
+              </Drawer>
+            )}
+
+            {/* Main Content */}
+            <Box
+              component="main"
+              sx={{
+                flexGrow: 1,
+                p: 3,
+                width: authenticated ? { sm: `calc(100% - ${drawerWidth}px)` } : '100%',
               }}
             >
               <Toolbar /> {/* This creates space for the AppBar */}
-              <Box sx={{ overflow: 'auto' }}>
-                <List>
-                  <ListItem button component={Link} to="/">
-                    <ListItemIcon>
-                      <DashboardIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Dashboard" />
-                  </ListItem>
-                  <ListItem button component={Link} to="/customers">
-                    <ListItemIcon>
-                      <PeopleIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Customers" />
-                  </ListItem>
-                  <ListItem button component={Link} to="/customer-services">
-                    <ListItemIcon>
-                      <BusinessCenterIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Customer Services" />
-                  </ListItem>
-                  <ListItem button component={Link} to="/services">
-                    <ListItemIcon>
-                      <BuildIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Services" />
-                  </ListItem>
-                  <ListItem button component={Link} to="/orders">
-                    <ListItemIcon>
-                      <ShoppingCartIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Orders" />
-                  </ListItem>
-                  <ListItem button component={Link} to="/products">
-                    <ListItemIcon>
-                      <InventoryIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Products" />
-                  </ListItem>
-                  <ListItem button component={Link} to="/materials">
-                    <ListItemIcon>
-                      <CategoryIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Materials" />
-                  </ListItem>
-                  <ListItem button component={Link} to="/box-prices">
-                    <ListItemIcon>
-                      <Inventory2Icon />
-                    </ListItemIcon>
-                    <ListItemText primary="Box Prices" />
-                  </ListItem>
-                  <ListItem button component={Link} to="/inserts">
-                    <ListItemIcon>
-                      <DescriptionIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Inserts" />
-                  </ListItem>
-                  <ListItem button component={Link} to="/rules">
-                    <ListItemIcon>
-                      <RuleIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Rules" />
-                  </ListItem>
-                  <ListItem button component={Link} to="/shipping/cad">
-                    <ListItemIcon>
-                      <LocalShippingIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="CAD Shipping" />
-                  </ListItem>
-                  <ListItem button component={Link} to="/shipping/us">
-                    <ListItemIcon>
-                      <LocalShippingIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="US Shipping" />
-                  </ListItem>
-                  <ListItem button component={Link} to="/bulk-operations">
-                    <ListItemIcon>
-                      <CloudUploadIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Bulk Operations" />
-                  </ListItem>
-                </List>
-              </Box>
-            </Drawer>
-          )}
+              <Container maxWidth="lg">
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/login" element={<Login />} />
 
-          {/* Main Content */}
-          <Box
-            component="main"
-            sx={{
-              flexGrow: 1,
-              p: 3,
-              width: authenticated ? { sm: `calc(100% - ${drawerWidth}px)` } : '100%',
-            }}
-          >
-            <Toolbar /> {/* This creates space for the AppBar */}
-            <Container maxWidth="lg">
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/login" element={<Login />} />
-
-                {/* Protected Routes */}
-                <Route
-                  path="/"
-                  element={
-                    <ProtectedRoute>
-                      <Typography variant="h4" component="h1">
-                        Welcome to LedgerLink
-                      </Typography>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="/customers" element={<ProtectedRoute><CustomerList /></ProtectedRoute>} />
-                <Route path="/customers/new" element={<ProtectedRoute><CustomerForm /></ProtectedRoute>} />
-                <Route path="/customers/:id/edit" element={<ProtectedRoute><CustomerForm /></ProtectedRoute>} />
-                <Route path="/customer-services" element={<ProtectedRoute><CustomerServiceList /></ProtectedRoute>} />
-                <Route path="/customer-services/new" element={<ProtectedRoute><CustomerServiceForm /></ProtectedRoute>} />
-                <Route path="/customer-services/:id/edit" element={<ProtectedRoute><CustomerServiceForm /></ProtectedRoute>} />
-                <Route path="/services" element={<ProtectedRoute><ServiceList /></ProtectedRoute>} />
-                <Route path="/services/new" element={<ProtectedRoute><ServiceForm /></ProtectedRoute>} />
-                <Route path="/services/:id/edit" element={<ProtectedRoute><ServiceForm /></ProtectedRoute>} />
-                <Route path="/products" element={<ProtectedRoute><ProductList /></ProtectedRoute>} />
-                <Route path="/products/new" element={<ProtectedRoute><ProductForm /></ProtectedRoute>} />
-                <Route path="/products/:id/edit" element={<ProtectedRoute><ProductForm /></ProtectedRoute>} />
-                <Route path="/materials" element={<ProtectedRoute><MaterialList /></ProtectedRoute>} />
-                <Route path="/materials/new" element={<ProtectedRoute><MaterialForm /></ProtectedRoute>} />
-                <Route path="/materials/:id/edit" element={<ProtectedRoute><MaterialForm /></ProtectedRoute>} />
-                <Route path="/box-prices" element={<ProtectedRoute><BoxPriceList /></ProtectedRoute>} />
-                <Route path="/box-prices/new" element={<ProtectedRoute><BoxPriceForm /></ProtectedRoute>} />
-                <Route path="/box-prices/:id/edit" element={<ProtectedRoute><BoxPriceForm /></ProtectedRoute>} />
-                <Route path="/inserts" element={<ProtectedRoute><InsertList /></ProtectedRoute>} />
-                <Route path="/inserts/new" element={<ProtectedRoute><InsertForm /></ProtectedRoute>} />
-                <Route path="/inserts/:id/edit" element={<ProtectedRoute><InsertForm /></ProtectedRoute>} />
-                <Route path="/orders" element={<ProtectedRoute><OrderList /></ProtectedRoute>} />
-                <Route path="/orders/new" element={<ProtectedRoute><OrderForm /></ProtectedRoute>} />
-                <Route path="/orders/:id/edit" element={<ProtectedRoute><OrderForm /></ProtectedRoute>} />
-                <Route path="/rules" element={<ProtectedRoute><RulesManagement /></ProtectedRoute>} />
-                <Route path="/shipping/cad" element={<ProtectedRoute><CADShippingList /></ProtectedRoute>} />
-                <Route path="/shipping/cad/new" element={<ProtectedRoute><CADShippingForm /></ProtectedRoute>} />
-                <Route path="/shipping/cad/:id/edit" element={<ProtectedRoute><CADShippingForm /></ProtectedRoute>} />
-                <Route path="/shipping/us" element={<ProtectedRoute><USShippingList /></ProtectedRoute>} />
-                <Route path="/shipping/us/new" element={<ProtectedRoute><USShippingForm /></ProtectedRoute>} />
-                <Route path="/shipping/us/:id/edit" element={<ProtectedRoute><USShippingForm /></ProtectedRoute>} />
-                <Route path="/bulk-operations" element={<ProtectedRoute><BulkOperations /></ProtectedRoute>} />
-              </Routes>
-            </Container>
+                  {/* Protected Routes */}
+                  <Route
+                    path="/"
+                    element={
+                      <ProtectedRoute>
+                        <Typography variant="h4" component="h1">
+                          Welcome to LedgerLink
+                        </Typography>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/customers" element={<ProtectedRoute><CustomerList /></ProtectedRoute>} />
+                  <Route path="/customers/new" element={<ProtectedRoute><CustomerForm /></ProtectedRoute>} />
+                  <Route path="/customers/:id/edit" element={<ProtectedRoute><CustomerForm /></ProtectedRoute>} />
+                  <Route path="/customer-services" element={<ProtectedRoute><CustomerServiceList /></ProtectedRoute>} />
+                  <Route path="/customer-services/new" element={<ProtectedRoute><CustomerServiceForm /></ProtectedRoute>} />
+                  <Route path="/customer-services/:id/edit" element={<ProtectedRoute><CustomerServiceForm /></ProtectedRoute>} />
+                  <Route path="/services" element={<ProtectedRoute><ServiceList /></ProtectedRoute>} />
+                  <Route path="/services/new" element={<ProtectedRoute><ServiceForm /></ProtectedRoute>} />
+                  <Route path="/services/:id/edit" element={<ProtectedRoute><ServiceForm /></ProtectedRoute>} />
+                  <Route path="/products" element={<ProtectedRoute><ProductList /></ProtectedRoute>} />
+                  <Route path="/products/new" element={<ProtectedRoute><ProductForm /></ProtectedRoute>} />
+                  <Route path="/products/:id/edit" element={<ProtectedRoute><ProductForm /></ProtectedRoute>} />
+                  <Route path="/materials" element={<ProtectedRoute><MaterialList /></ProtectedRoute>} />
+                  <Route path="/materials/new" element={<ProtectedRoute><MaterialForm /></ProtectedRoute>} />
+                  <Route path="/materials/:id/edit" element={<ProtectedRoute><MaterialForm /></ProtectedRoute>} />
+                  <Route path="/box-prices" element={<ProtectedRoute><BoxPriceList /></ProtectedRoute>} />
+                  <Route path="/box-prices/new" element={<ProtectedRoute><BoxPriceForm /></ProtectedRoute>} />
+                  <Route path="/box-prices/:id/edit" element={<ProtectedRoute><BoxPriceForm /></ProtectedRoute>} />
+                  <Route path="/inserts" element={<ProtectedRoute><InsertList /></ProtectedRoute>} />
+                  <Route path="/inserts/new" element={<ProtectedRoute><InsertForm /></ProtectedRoute>} />
+                  <Route path="/inserts/:id/edit" element={<ProtectedRoute><InsertForm /></ProtectedRoute>} />
+                  <Route path="/orders" element={<ProtectedRoute><OrderList /></ProtectedRoute>} />
+                  <Route path="/orders/new" element={<ProtectedRoute><OrderForm /></ProtectedRoute>} />
+                  <Route path="/orders/:id/edit" element={<ProtectedRoute><OrderForm /></ProtectedRoute>} />
+                  <Route path="/rules" element={<ProtectedRoute><RulesManagement /></ProtectedRoute>} />
+                  <Route path="/shipping/cad" element={<ProtectedRoute><CADShippingList /></ProtectedRoute>} />
+                  <Route path="/shipping/cad/new" element={<ProtectedRoute><CADShippingForm /></ProtectedRoute>} />
+                  <Route path="/shipping/cad/:id/edit" element={<ProtectedRoute><CADShippingForm /></ProtectedRoute>} />
+                  <Route path="/shipping/us" element={<ProtectedRoute><USShippingList /></ProtectedRoute>} />
+                  <Route path="/shipping/us/new" element={<ProtectedRoute><USShippingForm /></ProtectedRoute>} />
+                  <Route path="/shipping/us/:id/edit" element={<ProtectedRoute><USShippingForm /></ProtectedRoute>} />
+                  <Route path="/bulk-operations" element={<ProtectedRoute><BulkOperations /></ProtectedRoute>} />
+                  <Route path="/billing" element={<ProtectedRoute><BillingReport /></ProtectedRoute>} />
+                </Routes>
+              </Container>
+            </Box>
           </Box>
-        </Box>
-      </Router>
+        </Router>
+      </LocalizationProvider>
     </ThemeProvider>
   );
 }

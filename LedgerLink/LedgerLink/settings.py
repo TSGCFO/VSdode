@@ -83,13 +83,19 @@ WSGI_APPLICATION = 'LedgerLink.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres.lwtacyjvumjfdijfvqpt',
-        'PASSWORD': 'Hassan8488$@',
-        'HOST': 'aws-0-us-west-1.pooler.supabase.com',
-        'PORT': '6543',
+        'NAME': 'postgres',  # Your database name
+        'USER': 'postgres',  # Your Supabase user
+        'PASSWORD': 'Hassan8488$@',  # Replace with your actual password
+        'HOST': 'db.lwtacyjvumjfdijfvqpt.supabase.co',  # Session pooler host
+        'PORT': '5432',
+        'OPTIONS': {
+            'sslmode': 'require',  # Supabase requires SSL
+        },
     }
 }
+
+# Since you're using session pooler, we'll adjust the connection settings
+CONN_MAX_AGE = 60 * 15  # 5 minutes persistent connection
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
